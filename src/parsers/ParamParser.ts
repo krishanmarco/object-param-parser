@@ -2,8 +2,9 @@
 import * as _ from 'lodash';
 import { TValidator } from '../lib/Validators';
 import { TSanitizer } from '../lib/Sanitizers';
-
-export type TErrorHandler = (string, any) => void;
+import { TErrorHandler } from '../lib/ErrorHandlers';
+import { ParserErrorCodes, ParserErrorIds } from '../errors/ParserError';
+import { ParserErrorBuilders } from '../errors/ParserErrors';
 
 export type TParamParserOptions = {
   path?: string,
@@ -16,8 +17,8 @@ export type TParamParserOptions = {
 }
 
 export class ParamParser {
-  params?: Array<TParamParserOptions>;
-  onError?: Function;
+  private params?: Array<TParamParserOptions>;
+  private onError?: TErrorHandler;
 
   constructor() {
     this.params = [];
@@ -54,13 +55,16 @@ export class ParamParser {
         onError,
       } = options;
 
-      const defaultErrorHandler = _.isFunction(this.onError)
-        ? this.onError
-        : _.noop;
+      const errorHandler = (value: any, errorCode: number) => {
+        const errorId = ParserErrorIds[errorCode];
+        const parserError = ParserErrorBuilders[errorId](path, value);
 
-      const errorHandler = _.isFunction(onError)
-        ? onError
-        : defaultErrorHandler;
+        // Call the custom handler if defined
+        _.isFunction(onError) && onError(path, value, parserError);
+
+        // Call the default handler if defined
+        _.isFunction(this.onError) && this.onError(path, value, parserError);
+      };
 
       // Get value
       const defaultValue = _.isFunction(def)
@@ -72,7 +76,7 @@ export class ParamParser {
       // If value is null and required, error
       const required = req == null || req;
       if (value == null && required) {
-        errorHandler(path, value);
+        errorHandler(value, ParserErrorCodes.RequiredPropNotSet);
         return acc;
       }
 
@@ -89,7 +93,7 @@ export class ParamParser {
         : true;
 
       if (!allValid) {
-        errorHandler(path, sanitizedValue);
+        errorHandler(sanitizedValue, ParserErrorCodes.PropIsInvalid);
         return acc;
       }
 

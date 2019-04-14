@@ -1,6 +1,6 @@
 /** Created by Krishan Marco Madan <krishanmarcomadan@gmail.com> 13/04/19 - 12.29 * */
 import Validator from 'validator';
-import _ from 'lodash';
+import * as _ from 'lodash';
 
 export type TSanitizer = (any) => any;
 

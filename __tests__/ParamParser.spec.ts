@@ -1,6 +1,6 @@
 /** Created by Krishan Marco Madan [krishanmarco@outlook.com] [http://www.krishanmadan.com] [29-Jun-18|4:43 PM] © */
-import { ParamParser } from '../src';
-import { Parsers } from '../src/parsers/Parsers';
+import { Parser, ParamParser, Sanitizers, Validators } from '../src';
+import { ParserHttpErrorRequiredPropNotSet } from '../src/errors/ParserHttpErrors';
 
 describe('ParamParser', () => {
 
@@ -88,7 +88,7 @@ describe('ParamParser', () => {
   });
 
   it('Should statically parse values', () => {
-    const { a, b, c } = Parsers.parse({
+    const { a, b, c } = Parser.parse({
       a: { a: 'a' },
       b: { b: 'b' },
       d: { d: 'c' },
@@ -102,4 +102,52 @@ describe('ParamParser', () => {
     expect(c).toBe('c');
   });
 
+});
+
+describe('ParamParser', () => {
+
+  const parser = Parser.httpParser()
+    .get('body.email', {
+      sanitize: Sanitizers.email,
+      validate: Validators.isEmail,
+    })
+    .get('body.secret', {
+      validate: val => val.length > 5,
+    })
+    .get('body.name', {
+      req: false,
+      def: 'defaultName',
+    })
+    .getAs('user.auth', 'userAuth', {
+      sanitize: value => value.replace('Bearer ', ''),
+    })
+    .getAs('realUser.auth', 'realUserAuth', {
+      sanitize: value => value.replace('Bearer ', ''),
+    });
+
+  it('Should parse values correctly', () => {
+    const { email, secret, name, userAuth, realUserAuth } = parser.parse({
+      body: {
+        email: 'krishanmarco+abc@gmail.com',
+        secret: 'password',
+        name: null,
+      },
+      user: {
+        auth: 'Bearer userAuth',
+      },
+      realUser: {
+        auth: 'Bearer realUserAuth',
+      },
+    });
+
+    expect(email).toBe('krishanmarco@gmail.com');
+    expect(secret).toBe('password');
+    expect(name).toBe('defaultName');
+    expect(userAuth).toBe('userAuth');
+    expect(realUserAuth).toBe('realUserAuth');
+  });
+
+  it('Should throw HTTP errors correctly', () => {
+    expect(() => parser.parse()).toThrow(ParserHttpErrorRequiredPropNotSet);
+  });
 });
