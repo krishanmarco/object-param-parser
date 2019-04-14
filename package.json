@@ -2,7 +2,7 @@
   "name": "object-param-parser",
   "author": "krishanmarco <krishanmarcomadan@gmail.com>",
   "main": "dist/index.js",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A URL state manager",
   "repository": {
     "type": "git",
@@ -14,7 +14,8 @@
     "build:watch": "tsc -w -p tsconfig.release.json",
     "lint": "tslint -t stylish --project \"tsconfig.json\"",
     "test": "jest --coverage",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "prepublish": "yarn build"
   },
   "license": "Apache-2.0",
   "dependencies": {
