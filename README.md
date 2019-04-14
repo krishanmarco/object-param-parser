@@ -48,12 +48,12 @@ const { userEmail } = parser
 console.log(userEmail);
 ```
 
-##### addDef field
+##### add field
 ```js
 const parser = new ParamParser();
 
 const { email } = parser
-  .addDef({
+  .add({
     path: 'body.email',
     ...otherOptions
   })

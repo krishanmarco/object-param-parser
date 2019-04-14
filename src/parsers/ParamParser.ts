@@ -35,10 +35,18 @@ export class ParamParser {
   }
 
   get(path: string, options?: TParamParserOptions): ParamParser {
-    return this.addDef({ ...options, path });
+    return this.add({ ...options, path });
   }
 
-  addDef(options?: TParamParserOptions): ParamParser {
+  addAll(options: { [path: string]: TParamParserOptions }): ParamParser {
+    Object.keys(options).forEach(key => this.add({
+      ...options[key],
+      path: key,
+    }));
+    return this;
+  }
+
+  add(options?: TParamParserOptions): ParamParser {
     this.params.push(options);
     return this;
   }

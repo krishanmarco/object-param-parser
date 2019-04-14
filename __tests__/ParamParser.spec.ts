@@ -150,4 +150,23 @@ describe('ParamParser', () => {
   it('Should throw HTTP errors correctly', () => {
     expect(() => parser.parse()).toThrow(ParserHttpErrorRequiredPropNotSet);
   });
+
+  it('Should parse values correctly', () => {
+    const { email, password } = Parser.parser()
+      .addAll({
+        'body.email': {},
+        'body.secret': {
+          as: 'password',
+        },
+      })
+      .parse({
+        body: {
+          email: 'krishanmarco@gmail.com',
+          secret: 'password',
+        },
+      });
+
+    expect(email).toBe('krishanmarco@gmail.com');
+    expect(password).toBe('password');
+  });
 });

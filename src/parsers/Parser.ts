@@ -6,7 +6,7 @@ export class Parser {
 
   static parse(object: any, params: Array<TParamParserOptions>): any {
     return params
-      .reduce((paramParser, option) => paramParser.addDef(option), new ParamParser())
+      .reduce((paramParser, option) => paramParser.add(option), new ParamParser())
       .parse(object);
   }
 
