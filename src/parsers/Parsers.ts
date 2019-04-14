@@ -3,7 +3,7 @@ import { ParamParser, TParamParserOptions } from './ParamParser';
 
 export class Parsers {
 
-  static parseObject(object: any, params: Array<TParamParserOptions>): any {
+  static parse(object: any, params: Array<TParamParserOptions>): any {
     return params
       .reduce((paramParser, option) => paramParser.addDef(option), new ParamParser())
       .parse(object);

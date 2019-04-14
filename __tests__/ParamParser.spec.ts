@@ -1,5 +1,6 @@
 /** Created by Krishan Marco Madan [krishanmarco@outlook.com] [http://www.krishanmadan.com] [29-Jun-18|4:43 PM] © */
 import { ParamParser } from '../src';
+import { Parsers } from '../src/parsers/Parsers';
 
 describe('ParamParser', () => {
 
@@ -69,7 +70,7 @@ describe('ParamParser', () => {
   it('Should validate value', () => {
     const parser = new ParamParser()
       .get('a', {
-        validate: (_) => false,
+        validate: [(_) => false, (_) => true],
         onError: () => {
           throw new Error();
         },
@@ -80,14 +81,14 @@ describe('ParamParser', () => {
   it('Should sanitize value', () => {
     const { a } = new ParamParser()
       .get('a', {
-        sanitize: (val) => val + 'x',
+        sanitize: [(val) => val + 'y', (val) => val + 'z'],
       })
       .parse({ a: 'x' });
-    expect(a).toBe('xx');
+    expect(a).toBe('xyz');
   });
 
   it('Should statically parse values', () => {
-    const { a, b, c } = ParamParser.parseObject({
+    const { a, b, c } = Parsers.parse({
       a: { a: 'a' },
       b: { b: 'b' },
       d: { d: 'c' },

@@ -10,8 +10,8 @@ export type TParamParserOptions = {
   req?: boolean,
   def?: any | Function,
   as?: string,
-  validate?: TValidator,
-  sanitize?: TSanitizer,
+  validate?: TValidator | Array<TValidator>,
+  sanitize?: TSanitizer | Array<TSanitizer>,
   onError?: TErrorHandler,
 }
 
@@ -77,13 +77,17 @@ export class ParamParser {
       }
 
       // Sanitize the value before validating because
-      // the sanitizer may mutate the value
-      const sanitizedValue = _.isFunction(sanitize)
-        ? sanitize(value)
+      // the sanitizers may mutate the value
+      const sanitizedValue = sanitize != null
+        ? _.castArray(sanitize).reduce((v, f) => f(v), value)
         : value;
 
       // Validate
-      if (_.isFunction(validate) && !validate(sanitizedValue)) {
+      const allValid = validate != null
+        ? _.castArray(validate).reduce((v, f) => v && f(sanitizedValue), true)
+        : true;
+
+      if (!allValid) {
         errorHandler(path, sanitizedValue);
         return acc;
       }
