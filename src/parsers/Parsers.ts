@@ -8,6 +8,5 @@ export class Parsers {
       .reduce((paramParser, option) => paramParser.addDef(option), new ParamParser())
       .parse(object);
   }
-
-
+  
 }

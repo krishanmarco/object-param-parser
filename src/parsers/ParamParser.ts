@@ -78,8 +78,9 @@ export class ParamParser {
 
       // Sanitize the value before validating because
       // the sanitizers may mutate the value
+      // We also need to coerce the value before passing it to the sanitizer
       const sanitizedValue = sanitize != null
-        ? _.castArray(sanitize).reduce((v, f) => f(v), value)
+        ? _.castArray(sanitize).reduce((v, f) => f(v + ''), value)
         : value;
 
       // Validate
