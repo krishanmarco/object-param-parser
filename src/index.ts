@@ -22,3 +22,7 @@ export {
 export {
   Validators,
 } from './lib/Validators';
+
+export {
+  ParserHttpErrorRequiredPropNotSet,
+} from './errors/ParserHttpErrors';

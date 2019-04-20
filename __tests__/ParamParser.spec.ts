@@ -1,28 +1,33 @@
 /** Created by Krishan Marco Madan [krishanmarco@outlook.com] [http://www.krishanmadan.com] [29-Jun-18|4:43 PM] © */
-import { Parser, ParamParser, Sanitizers, Validators } from '../src';
-import { ParserHttpErrorRequiredPropNotSet } from '../src/errors/ParserHttpErrors';
+import {
+  Parser,
+  ParamParser,
+  Sanitizers,
+  Validators,
+  ParserHttpErrorRequiredPropNotSet
+} from '../src';
 
 describe('ParamParser', () => {
 
   it('Should parse values correctly', () => {
-    const { a } = new ParamParser()
+    const {a} = new ParamParser()
       .get('a.a.a')
-      .parse({ a: { a: { a: 'aaa' } } });
+      .parse({a: {a: {a: 'aaa'}}});
     expect(a).toBe('aaa');
   });
 
   it('Should rename values correctly', () => {
-    const { ab } = new ParamParser()
+    const {ab} = new ParamParser()
       .getAs('a.b', 'ab')
-      .parse({ a: { b: 'ab' } });
+      .parse({a: {b: 'ab'}});
     expect(ab).toBe('ab');
   });
 
   it('Should rename values correctly (nested)', () => {
     const val = new ParamParser()
       .getAs('a.b', 'b.a')
-      .parse({ a: { b: 'ab' } });
-    expect(val).toEqual({ b: { a: 'ab' } });
+      .parse({a: {b: 'ab'}});
+    expect(val).toEqual({b: {a: 'ab'}});
   });
 
   it('Should invoke error handler on required value not set', () => {
@@ -31,7 +36,7 @@ describe('ParamParser', () => {
         throw new Error();
       })
       .get('a.b');
-    expect(() => parser.parse({ a: { b: null } })).toThrow();
+    expect(() => parser.parse({a: {b: null}})).toThrow();
   });
 
   it('Should not invoke error handler on required value not set', () => {
@@ -40,7 +45,7 @@ describe('ParamParser', () => {
         throw new Error();
       })
       .get('a.b');
-    expect(() => parser.parse({ a: { b: 'a' } })).not.toThrow();
+    expect(() => parser.parse({a: {b: 'a'}})).not.toThrow();
   });
 
   it('Should invoke custom error handler on required value not set and default error handler not set', () => {
@@ -50,19 +55,19 @@ describe('ParamParser', () => {
           throw new Error();
         },
       });
-    expect(() => parser.parse({ a: { b: null } })).toThrow();
+    expect(() => parser.parse({a: {b: null}})).toThrow();
   });
 
   it('Should use default value (constant)', () => {
-    const { a } = new ParamParser()
-      .get('a', { def: 'x' })
+    const {a} = new ParamParser()
+      .get('a', {def: 'x'})
       .parse();
     expect(a).toBe('x');
   });
 
   it('Should use default value (function)', () => {
-    const { a } = new ParamParser()
-      .get('a', { def: () => 'x' })
+    const {a} = new ParamParser()
+      .get('a', {def: () => 'x'})
       .parse();
     expect(a).toBe('x');
   });
@@ -79,23 +84,23 @@ describe('ParamParser', () => {
   });
 
   it('Should sanitize value', () => {
-    const { a } = new ParamParser()
+    const {a} = new ParamParser()
       .get('a', {
         sanitize: [(val) => val + 'y', (val) => val + 'z'],
       })
-      .parse({ a: 'x' });
+      .parse({a: 'x'});
     expect(a).toBe('xyz');
   });
 
   it('Should statically parse values', () => {
-    const { a, b, c } = Parser.parse({
-      a: { a: 'a' },
-      b: { b: 'b' },
-      d: { d: 'c' },
+    const {a, b, c} = Parser.parse({
+      a: {a: 'a'},
+      b: {b: 'b'},
+      d: {d: 'c'},
     }, [
-      { path: 'a.a' },
-      { path: 'b.b' },
-      { path: 'd.d', as: 'c' },
+      {path: 'a.a'},
+      {path: 'b.b'},
+      {path: 'd.d', as: 'c'},
     ]);
     expect(a).toBe('a');
     expect(b).toBe('b');
@@ -126,7 +131,7 @@ describe('ParamParser', () => {
     });
 
   it('Should parse values correctly', () => {
-    const { email, secret, name, userAuth, realUserAuth } = parser.parse({
+    const {email, secret, name, userAuth, realUserAuth} = parser.parse({
       body: {
         email: 'krishanmarco+abc@gmail.com',
         secret: 'password',
@@ -152,7 +157,7 @@ describe('ParamParser', () => {
   });
 
   it('Should parse values correctly', () => {
-    const { email, password } = Parser.parser()
+    const {email, password} = Parser.parser()
       .addAll({
         'body.email': {},
         'body.secret': {
@@ -168,5 +173,44 @@ describe('ParamParser', () => {
 
     expect(email).toBe('krishanmarco@gmail.com');
     expect(password).toBe('password');
+  });
+
+  it('Should parse values from a JSON correctly (string version)', () => {
+    const {email, password} = Parser.parser()
+      .addAll(JSON.stringify({
+        'body.email': {
+          sanitize: 'email',
+          validate: 'isEmail',
+        },
+        'body.secret': {
+          as: 'password',
+        },
+      }))
+      .parse({
+        body: {
+          email: 'krishanmarco+abc@gmail.com',
+          secret: 'password',
+        },
+      });
+
+    expect(email).toBe('krishanmarco@gmail.com');
+    expect(password).toBe('password');
+  });
+
+  it('Should parse values from a JSON correctly (array builder version)', () => {
+    const parser = Parser.parser()
+      .withCustomErrorHandler(() => {
+        throw new Error();
+      })
+      .addAll(JSON.stringify({
+        'n': {
+          validate: {f: 'range', p: {min: 0, max: 10}},
+        }
+      }));
+
+    expect(() => parser.parse({n: 11})).toThrow();
+    expect(() => parser.parse({n: -1})).toThrow();
+    expect(() => parser.parse({n: 0})).not.toThrow();
+    expect(() => parser.parse({n: 10})).not.toThrow();
   });
 });

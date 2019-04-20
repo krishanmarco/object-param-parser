@@ -1,18 +1,18 @@
 /** Created by Krishan Marco Madan <krishanmarcomadan@gmail.com> 13/04/19 - 12.29 * */
 import * as _ from 'lodash';
-import { TValidator } from '../lib/Validators';
-import { TSanitizer } from '../lib/Sanitizers';
-import { TErrorHandler } from '../lib/ErrorHandlers';
-import { ParserErrorCodes, ParserErrorIds } from '../errors/ParserError';
-import { ParserErrorBuilders } from '../errors/ParserErrors';
+import {TErrorHandler} from '../lib/ErrorHandlers';
+import {ParserErrorCodes, ParserErrorIds} from '../errors/ParserError';
+import {ParserErrorBuilders} from '../errors/ParserErrors';
+import {Sanitizers, Validators} from "../";
+import {Handler, TParserMiddleware} from "../lib/Handler";
 
 export type TParamParserOptions = {
   path?: string,
   req?: boolean,
   def?: any | Function,
   as?: string,
-  validate?: TValidator | Array<TValidator>,
-  sanitize?: TSanitizer | Array<TSanitizer>,
+  validate?: TParserMiddleware | Array<TParserMiddleware>,
+  sanitize?: TParserMiddleware | Array<TParserMiddleware>,
   onError?: TErrorHandler,
 }
 
@@ -31,14 +31,18 @@ export class ParamParser {
   }
 
   getAs(path: string, as: string, options?: TParamParserOptions): ParamParser {
-    return this.get(path, { ...options, as });
+    return this.get(path, {...options, as});
   }
 
   get(path: string, options?: TParamParserOptions): ParamParser {
-    return this.add({ ...options, path });
+    return this.add({...options, path});
   }
 
-  addAll(options: { [path: string]: TParamParserOptions }): ParamParser {
+  addAll(_options: { [path: string]: TParamParserOptions } | string): ParamParser {
+    const options = _.isString(_options)
+      ? JSON.parse(<string>_options)
+      : _options;
+
     Object.keys(options).forEach(key => this.add({
       ...options[key],
       path: key,
@@ -79,7 +83,10 @@ export class ParamParser {
         ? def()
         : def;
 
-      const value = _.get(data, path) || defaultValue;
+      const _value = _.get(data, path);
+      const value = _value != null
+        ? _value
+        : defaultValue;
 
       // If value is null and required, error
       const required = req == null || req;
@@ -91,14 +98,12 @@ export class ParamParser {
       // Sanitize the value before validating because
       // the sanitizers may mutate the value
       // We also need to coerce the value before passing it to the sanitizer
-      const sanitizedValue = sanitize != null
-        ? _.castArray(sanitize).reduce((v, f) => f(v + ''), value)
-        : value;
+      const sanitizedValue = Handler
+        .reduceHandler(sanitize, (v, f) => Sanitizers.invoke(f, v + ''), value);
 
       // Validate
-      const allValid = validate != null
-        ? _.castArray(validate).reduce((v, f) => v && f(sanitizedValue), true)
-        : true;
+      const allValid = Handler
+        .reduceHandler(validate, (v, f) => v && Validators.invoke(f, sanitizedValue), true);
 
       if (!allValid) {
         errorHandler(sanitizedValue, ParserErrorCodes.PropIsInvalid);
