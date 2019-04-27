@@ -1,4 +1,5 @@
 /** Created by Krishan Marco Madan <krishanmarcomadan@gmail.com> 13/04/19 - 12.29 * */
+import * as _ from 'lodash';
 import Validator from 'validator';
 import {Handler, IParserMiddlewares, TParserMiddleware} from "./Handler";
 
@@ -9,7 +10,20 @@ export const Validators: IParserMiddlewares = Object.assign(Validator, {
   Builders: {
     range({min, max}): (val) => any {
       return (val) => val >= min && val <= max;
-    }
+    },
+
+    oneOf({vals}): (val) => any {
+      return (val) => (vals || []).includes(val);
+    },
+
+    equals({val: expectedValue}): (val) => any {
+      return (val) => {
+        if (_.isFunction(expectedValue)) {
+          return this.equals({val: expectedValue(val)})
+        }
+        return _.isEqual(expectedValue, val);
+      }
+    },
   },
 
   invoke(parserMiddleware: TParserMiddleware, ...params: any[]): boolean {

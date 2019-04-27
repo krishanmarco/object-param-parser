@@ -213,4 +213,64 @@ describe('ParamParser', () => {
     expect(() => parser.parse({n: 0})).not.toThrow();
     expect(() => parser.parse({n: 10})).not.toThrow();
   });
+
+  it('Should parse values from a JSON correctly (array builder function version)', () => {
+    const parser = Parser.parser()
+      .withCustomErrorHandler(() => {
+        throw new Error();
+      })
+      .addAll({
+        'n': {
+          validate: {
+            f: ({min, max}) => (val) => val >= min && val <= max,
+            p: {min: 0, max: 10, length: 10}
+          },
+        }
+      });
+
+    expect(() => parser.parse({n: 11})).toThrow();
+    expect(() => parser.parse({n: -1})).toThrow();
+    expect(() => parser.parse({n: 0})).not.toThrow();
+    expect(() => parser.parse({n: 10})).not.toThrow();
+  });
+
+  it('Should validate with "oneOf"', () => {
+    const parser = Parser.parser()
+      .withCustomErrorHandler(() => {
+        throw new Error();
+      })
+      .addAll({
+        'n': {
+          validate: {
+            f: 'oneOf',
+            p: {vals: ["a", "b", 1, 2]}
+          },
+        }
+      });
+
+    expect(() => parser.parse({n: null})).toThrow();
+    expect(() => parser.parse({n: "1"})).toThrow();
+    expect(() => parser.parse({n: "b"})).not.toThrow();
+    expect(() => parser.parse({n: 2})).not.toThrow();
+  });
+
+  it('Should validate with "equals"', () => {
+    const parser = Parser.parser()
+      .withCustomErrorHandler(() => {
+        throw new Error();
+      })
+      .addAll({
+        'n': {
+          validate: {
+            f: 'equals',
+            p: {val: "1234"}
+          },
+        }
+      });
+
+    expect(() => parser.parse({n: null})).toThrow();
+    expect(() => parser.parse({n: ""})).toThrow();
+    expect(() => parser.parse({n: "123"})).toThrow();
+    expect(() => parser.parse({n: "1234"})).not.toThrow();
+  });
 });

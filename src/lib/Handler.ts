@@ -3,7 +3,8 @@ import * as _ from 'lodash';
 
 export type TParserMiddleware = ((...params) => any)
   | string
-  | { f: string, p: any[] };
+  | { f: any, p: any[] }
+  | any;
 
 type TReducerHandler = TParserMiddleware
   | Array<TParserMiddleware>
@@ -38,8 +39,11 @@ export class Handler {
 
     // handler is an object({f, p}) else default value
     if (_.isObject(handler)) {
-      const {f: funcBuilderName, p: funcBuilderParamsAsObj} = <{ f, p }>handler;
-      return handlerObj.Builders[funcBuilderName](funcBuilderParamsAsObj)(...params);
+      const {f: funcBuilder, p: funcBuilderParamsAsObj} = <{ f, p }>handler;
+
+      return _.isFunction(funcBuilder)
+        ? funcBuilder(funcBuilderParamsAsObj)(...params)
+        : handlerObj.Builders[funcBuilder](funcBuilderParamsAsObj)(...params);
     }
 
     return defaultVal;
