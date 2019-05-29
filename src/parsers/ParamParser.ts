@@ -90,8 +90,10 @@ export class ParamParser {
 
       // If value is null and required, error
       const required = req == null || req;
-      if (value == null && required) {
-        errorHandler(value, ParserErrorCodes.RequiredPropNotSet);
+      if (value == null) {
+        if (required) {
+          errorHandler(value, ParserErrorCodes.RequiredPropNotSet);
+        }
         return acc;
       }
 
