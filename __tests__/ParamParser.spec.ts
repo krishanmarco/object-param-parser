@@ -83,6 +83,15 @@ describe('ParamParser', () => {
     expect(() => parser.parse()).toThrow();
   });
 
+  it('Should not validate undefined if req=false', () => {
+    const parser = new ParamParser()
+      .get('a.b', {
+        validate: Validators.isEmail,
+        req: false
+      });
+    expect(() => parser.parse({a: {}})).not.toThrow();
+  });
+
   it('Should sanitize value', () => {
     const {a} = new ParamParser()
       .get('a', {
