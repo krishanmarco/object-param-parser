@@ -2,32 +2,30 @@
 import {
   Parser,
   ParamParser,
-  Sanitizers,
   Validators,
-  ParserHttpErrorRequiredPropNotSet
 } from '../src';
 
 describe('ParamParser', () => {
 
   it('Should parse values correctly', () => {
-    const {a} = new ParamParser()
+    const { a } = new ParamParser()
       .get('a.a.a')
-      .parse({a: {a: {a: 'aaa'}}});
+      .parse({ a: { a: { a: 'aaa' } } });
     expect(a).toBe('aaa');
   });
 
   it('Should rename values correctly', () => {
-    const {ab} = new ParamParser()
+    const { ab } = new ParamParser()
       .getAs('a.b', 'ab')
-      .parse({a: {b: 'ab'}});
+      .parse({ a: { b: 'ab' } });
     expect(ab).toBe('ab');
   });
 
   it('Should rename values correctly (nested)', () => {
     const val = new ParamParser()
       .getAs('a.b', 'b.a')
-      .parse({a: {b: 'ab'}});
-    expect(val).toEqual({b: {a: 'ab'}});
+      .parse({ a: { b: 'ab' } });
+    expect(val).toEqual({ b: { a: 'ab' } });
   });
 
   it('Should invoke error handler on required value not set', () => {
@@ -36,7 +34,7 @@ describe('ParamParser', () => {
         throw new Error();
       })
       .get('a.b');
-    expect(() => parser.parse({a: {b: null}})).toThrow();
+    expect(() => parser.parse({ a: { b: null } })).toThrow();
   });
 
   it('Should not invoke error handler on required value not set', () => {
@@ -45,7 +43,7 @@ describe('ParamParser', () => {
         throw new Error();
       })
       .get('a.b');
-    expect(() => parser.parse({a: {b: 'a'}})).not.toThrow();
+    expect(() => parser.parse({ a: { b: 'a' } })).not.toThrow();
   });
 
   it('Should invoke custom error handler on required value not set and default error handler not set', () => {
@@ -55,19 +53,19 @@ describe('ParamParser', () => {
           throw new Error();
         },
       });
-    expect(() => parser.parse({a: {b: null}})).toThrow();
+    expect(() => parser.parse({ a: { b: null } })).toThrow();
   });
 
   it('Should use default value (constant)', () => {
-    const {a} = new ParamParser()
-      .get('a', {def: 'x'})
+    const { a } = new ParamParser()
+      .get('a', { def: 'x' })
       .parse();
     expect(a).toBe('x');
   });
 
   it('Should use default value (function)', () => {
-    const {a} = new ParamParser()
-      .get('a', {def: () => 'x'})
+    const { a } = new ParamParser()
+      .get('a', { def: () => 'x' })
       .parse();
     expect(a).toBe('x');
   });
@@ -87,199 +85,181 @@ describe('ParamParser', () => {
     const parser = new ParamParser()
       .get('a.b', {
         validate: Validators.isEmail,
-        req: false
+        req: false,
       });
-    expect(() => parser.parse({a: {}})).not.toThrow();
+    expect(() => parser.parse({ a: {} })).not.toThrow();
   });
 
   it('Should sanitize value', () => {
-    const {a} = new ParamParser()
+    const { a } = new ParamParser()
       .get('a', {
         sanitize: [(val) => val + 'y', (val) => val + 'z'],
       })
-      .parse({a: 'x'});
+      .parse({ a: 'x' });
     expect(a).toBe('xyz');
   });
 
   it('Should statically parse values', () => {
-    const {a, b, c} = Parser.parse({
-      a: {a: 'a'},
-      b: {b: 'b'},
-      d: {d: 'c'},
+    const { a, b, c } = Parser.parse({
+      a: { a: 'a' },
+      b: { b: 'b' },
+      d: { d: 'c' },
     }, [
-      {path: 'a.a'},
-      {path: 'b.b'},
-      {path: 'd.d', as: 'c'},
+      { path: 'a.a' },
+      { path: 'b.b' },
+      { path: 'd.d', as: 'c' },
     ]);
     expect(a).toBe('a');
     expect(b).toBe('b');
     expect(c).toBe('c');
   });
 
+  it('Should statically parse values', () => {
+    const { a, b, c } = Parser.parse({
+      a: { a: 'a' },
+      b: { b: 'b' },
+      c: { c: 'c' },
+    }, [
+      {
+        path: 'a.a',
+        select: false,
+      },
+      {
+        path: 'b.b',
+        select: true,
+      },
+      {
+        path: 'c.c',
+      },
+    ]);
+    expect(a).toBeUndefined();
+    expect(b).toBe('b');
+    expect(c).toBe('c');
+  });
+
 });
 
-describe('ParamParser', () => {
+describe('ParamParser (Form version)', () => {
 
-  const parser = Parser.httpParser()
-    .get('body.email', {
-      sanitize: Sanitizers.email,
-      validate: Validators.isEmail,
-    })
-    .get('body.secret', {
-      validate: val => val.length > 5,
-    })
-    .get('body.name', {
-      req: false,
-      def: 'defaultName',
-    })
-    .getAs('user.auth', 'userAuth', {
-      sanitize: value => value.replace('Bearer ', ''),
-    })
-    .getAs('realUser.auth', 'realUserAuth', {
-      sanitize: value => value.replace('Bearer ', ''),
-    });
-
-  it('Should parse values correctly', () => {
-    const {email, secret, name, userAuth, realUserAuth} = parser.parse({
-      body: {
-        email: 'krishanmarco+abc@gmail.com',
-        secret: 'password',
-        name: null,
-      },
-      user: {
-        auth: 'Bearer userAuth',
-      },
-      realUser: {
-        auth: 'Bearer realUserAuth',
-      },
-    });
-
-    expect(email).toBe('krishanmarco@gmail.com');
-    expect(secret).toBe('password');
-    expect(name).toBe('defaultName');
-    expect(userAuth).toBe('userAuth');
-    expect(realUserAuth).toBe('realUserAuth');
-  });
-
-  it('Should throw HTTP errors correctly', () => {
-    expect(() => parser.parse()).toThrow(ParserHttpErrorRequiredPropNotSet);
-  });
-
-  it('Should parse values correctly', () => {
-    const {email, password} = Parser.parser()
-      .addAll({
-        'body.email': {},
-        'body.secret': {
-          as: 'password',
-        },
-      })
-      .parse({
-        body: {
-          email: 'krishanmarco@gmail.com',
-          secret: 'password',
-        },
-      });
-
-    expect(email).toBe('krishanmarco@gmail.com');
-    expect(password).toBe('password');
-  });
-
-  it('Should parse values from a JSON correctly (string version)', () => {
-    const {email, password} = Parser.parser()
+  it('Should parse a JSON form def correctly (arrays)', () => {
+    const result = Parser.parser()
       .addAll(JSON.stringify({
-        'body.email': {
-          sanitize: 'email',
-          validate: 'isEmail',
-        },
-        'body.secret': {
-          as: 'password',
+        'users[*]': {},
+        'users': {
+          as: 'allowedUsers',
         },
       }))
       .parse({
-        body: {
-          email: 'krishanmarco+abc@gmail.com',
-          secret: 'password',
-        },
+        users: [
+          { name: 'User1', email: 'user1@test.com' },
+          { name: 'User2', email: 'user2@test.com' },
+        ],
       });
 
-    expect(email).toBe('krishanmarco@gmail.com');
-    expect(password).toBe('password');
+    const { users, allowedUsers } = result;
+    expect(users.length).toBe(2);
+    expect(users[0]).toHaveProperty('email', 'user1@test.com');
+    expect(users[0]).toHaveProperty('name', 'User1');
+    expect(users[1]).toHaveProperty('email', 'user2@test.com');
+    expect(users[1]).toHaveProperty('name', 'User2');
+
+    expect(allowedUsers.length).toBe(2);
+    expect(allowedUsers[0]).toHaveProperty('email', 'user1@test.com');
+    expect(allowedUsers[0]).toHaveProperty('name', 'User1');
+    expect(allowedUsers[1]).toHaveProperty('email', 'user2@test.com');
+    expect(allowedUsers[1]).toHaveProperty('name', 'User2');
   });
 
-  it('Should parse values from a JSON correctly (array builder version)', () => {
-    const parser = Parser.parser()
-      .withCustomErrorHandler(() => {
-        throw new Error();
-      })
+  it('Should throw on invalid JSON form def (arrays)', () => {
+    const parser = Parser.httpParser()
       .addAll(JSON.stringify({
-        'n': {
-          validate: {f: 'range', p: {min: 0, max: 10}},
-        }
+        'users[*].email': {
+          sanitize: 'email',
+          validate: 'isEmail',
+        },
       }));
-
-    expect(() => parser.parse({n: 11})).toThrow();
-    expect(() => parser.parse({n: -1})).toThrow();
-    expect(() => parser.parse({n: 0})).not.toThrow();
-    expect(() => parser.parse({n: 10})).not.toThrow();
-  });
-
-  it('Should parse values from a JSON correctly (array builder function version)', () => {
-    const parser = Parser.parser()
-      .withCustomErrorHandler(() => {
-        throw new Error();
-      })
-      .addAll({
-        'n': {
-          validate: {
-            f: ({min, max}) => (val) => val >= min && val <= max,
-            p: {min: 0, max: 10, length: 10}
-          },
-        }
+    expect(() => {
+      parser.parse({
+        users: [
+          { name: 'User1', email: 'user1@test.com' },
+          { name: 'User2', email: 'invalidEmailAddress' },
+        ],
       });
-
-    expect(() => parser.parse({n: 11})).toThrow();
-    expect(() => parser.parse({n: -1})).toThrow();
-    expect(() => parser.parse({n: 0})).not.toThrow();
-    expect(() => parser.parse({n: 10})).not.toThrow();
+    }).toThrow();
   });
 
-  it('Should validate with "oneOf"', () => {
-    const parser = Parser.parser()
-      .withCustomErrorHandler(() => {
-        throw new Error();
-      })
-      .addAll({
-        'n': {
-          validate: {
-            f: 'oneOf',
-            p: {vals: ["a", "b", 1, 2]}
-          },
-        }
+  it('Should parse a JSON form def correctly (nested arrays)', () => {
+    const result = Parser.parser()
+      .addAll(JSON.stringify({
+        'oldUsers[*].emails[*]': {
+          sanitize: 'email',
+          validate: 'isEmail',
+        },
+      }))
+      .parse({
+        oldUsers: [
+          { emails: ['user-1@test.com', 'user--1@test.com', 'user---1@test.com'] },
+          { emails: ['user-2@test.com', 'user--2@test.com', 'user---2@test.com'] },
+        ],
       });
-
-    expect(() => parser.parse({n: null})).toThrow();
-    expect(() => parser.parse({n: "1"})).toThrow();
-    expect(() => parser.parse({n: "b"})).not.toThrow();
-    expect(() => parser.parse({n: 2})).not.toThrow();
+    const { emails } = result;
+    expect(emails.length).toBe(6);
+    expect(emails[0]).toBe('user-1@test.com');
+    expect(emails[1]).toBe('user--1@test.com');
+    expect(emails[2]).toBe('user---1@test.com');
+    expect(emails[3]).toBe('user-2@test.com');
+    expect(emails[4]).toBe('user--2@test.com');
+    expect(emails[5]).toBe('user---2@test.com');
   });
 
-  it('Should validate with "equals"', () => {
-    const parser = Parser.parser()
-      .withCustomErrorHandler(() => {
-        throw new Error();
-      })
-      .addAll({
-        'n': {
+  it('Should parse a JSON form def correctly (nested objects in arrays)', () => {
+    const result = Parser.parser()
+      .addAll(JSON.stringify({
+        'info[*]': {},
+        'info[0]': {
+          as: 'info0',
+        },
+        'info[0].test': {},
+        'info[0].nonExistantValue': {
+          req: false,
+        },
+        'info[1]': {
+          as: 'info1',
           validate: {
             f: 'equals',
-            p: {val: "1234"}
+            p: { val: 'RandomString' },
           },
-        }
+        },
+        'info[3][2].email': {
+          sanitize: 'email',
+          validate: 'isEmail',
+        },
+      }))
+      .parse({
+        info: [
+          { test: 'dynamic-object' },
+          'RandomString',
+          1,
+          [
+            'user3@test.com',
+            'user3',
+            { name: 'User4', email: 'user4@test.com' },
+          ],
+        ],
       });
-
-    expect(() => parser.parse({n: null})).toThrow();
-    expect(() => parser.parse({n: ""})).toThrow();
-    expect(() => parser.parse({n: "123"})).toThrow();
-    expect(() => parser.parse({n: "1234"})).not.toThrow();
+    const {
+      info,
+      info0,
+      test,
+      nonExistantValue,
+      info1,
+      email,
+    } = result;
+    expect(info.length).toBe(4);
+    expect(info0).toHaveProperty('test', 'dynamic-object');
+    expect(test).toBe('dynamic-object');
+    expect(nonExistantValue).toBeUndefined();
+    expect(info1).toBe('RandomString');
+    expect(email).toBe('user4@test.com');
   });
 });
