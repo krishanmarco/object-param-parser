@@ -1,10 +1,10 @@
 /** Created by Krishan Marco Madan <krishanmarcomadan@gmail.com> 13/04/19 - 12.29 * */
-import { ParamParser, TParamParserOptions } from './ParamParser';
 import { ErrorHandlers } from '../lib/ErrorHandlers';
+import { ParamParser, TParamParserOptions } from './ParamParser';
 
 export class Parser {
 
-  static parse(object: any, params: Array<TParamParserOptions>): any {
+  static parse(object: any, params: TParamParserOptions[]): any {
     return params
       .reduce((paramParser, option) => paramParser.add(option), new ParamParser())
       .parse(object);

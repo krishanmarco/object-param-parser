@@ -17,12 +17,21 @@
     "no-void-expression": false,
     "no-redundant-jsdoc": false,
     "prefer-type-cast": false,
-    "typedef": [
-      true,
-      "parameter",
-      "arrow-parameter",
-      "property-declaration",
-      "member-variable-declaration"
-    ]
+    "no-any": false,
+    "member-access": false,
+    "no-null-keyword": false,
+    "newline-before-return": false,
+    "typedef": false,
+    "no-shadowed-variable": false,
+    "no-unused-expression": false,
+    "no-reserved-keywords": false,
+    "underscore-consistent-invocation": false,
+    "no-increment-decrement": false,
+    "function-name": false,
+    "no-unnecessary-class": false,
+    "no-single-line-block-comment": false,
+    "max-func-body-length": false,
+    "prefer-object-spread": false,
+    "no-unnecessary-local-variable": false
   }
 }

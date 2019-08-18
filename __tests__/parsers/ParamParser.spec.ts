@@ -1,11 +1,11 @@
 /** Created by Krishan Marco Madan [krishanmarco@outlook.com] [http://www.krishanmadan.com] [29-Jun-18|4:43 PM] © */
 import {
-  Parser,
   ParamParser,
+  Parser,
   Validators,
-} from '../src';
+} from '../../src';
 
-describe('ParamParser', () => {
+describe('parsers/ParamParser', () => {
 
   it('Should parse values correctly', () => {
     const { a } = new ParamParser()

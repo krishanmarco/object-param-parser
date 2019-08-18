@@ -25,8 +25,9 @@
   },
   "devDependencies": {
     "@types/jest": "^23.3.14",
-    "@types/validator": "^10.11.0",
+    "@types/lodash": "^4.14.136",
     "@types/node": "^10.12.18",
+    "@types/validator": "^10.11.0",
     "jest": "~23.6.0",
     "prettier": "1.15.3",
     "rimraf": "^2.6.3",
