@@ -8,6 +8,18 @@ export {
 } from './parsers/Parser';
 
 export {
+  ObjectMapper,
+} from './mappers/ObjectMapper';
+
+export {
+  buildReadWriteObjectMapper
+} from './mappers/ReadWriteObjectMapper';
+
+export {
+  buildReduxReadWriteObjectMapper
+} from './mappers/ReduxReadWriteObjectMapper';
+
+export {
   ErrorHandlers,
 } from './lib/ErrorHandlers';
 

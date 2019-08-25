@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import * as _fp from 'lodash/fp';
 
 /**
  * Tries to invoke a function at a given path
@@ -22,4 +23,9 @@ export function mergeObject(source1, source2) {
     }
     return undefined;
   });
+}
+
+export function random() {
+  // tslint:disable-next-line:insecure-random
+  return Math.random();
 }

@@ -1,8 +1,11 @@
+/** Created by Krishan Marco Madan <krishanmarcomadan@gmail.com> 13/04/19 - 12.29 * */
 import * as _ from 'lodash';
 import { tryInvoke } from '../lib/HelperFunctions';
 import { ObjectMapper, TObjectMapperMappers } from './ObjectMapper';
 
-export function buildReadWriteObjectMapper<R>(setValueFromRoot: Function, extend: TObjectMapperMappers<R> | null = null): TObjectMapperMappers<R> {
+export type TSetValue = (value: any, path: string) => void;
+
+export function buildReadWriteObjectMapper<R>(setValueToObj: TSetValue, extend: TObjectMapperMappers<R> | null = null): TObjectMapperMappers<R> {
   return {
     /**
      * Applied to all the values of the object
@@ -10,81 +13,86 @@ export function buildReadWriteObjectMapper<R>(setValueFromRoot: Function, extend
      * @param path
      * @param rootValue
      */
-    globalMapper: (value: any, path: string, rootValue: any) => ({
-      ...tryInvoke(extend, 'globalMapper', [value, path, rootValue], {}),
+    globalMapper: {
+      apply: (value: any, path: string, rootValue: any) => ({
+        ...tryInvoke(extend, 'globalMapper.apply', [value, path, rootValue], {}),
 
-      // Path in which we are: '' for root
-      path,
+        // Path in which we are: '' for root
+        path,
 
-      // Value at the current node
-      value,
+        // Value at the current node
+        value,
 
-      // Sets values without middlewares
-      setValue: (newValue) => {
-        const newRootValue = _.set(rootValue, path, newValue);
-        setValueFromRoot(newRootValue);
-      },
+        // Sets values without middlewares
+        setValue: (newValue) => {
+          setValueToObj(newValue, path);
+        },
 
-      // Gets value from this node through to path
-      getValue: (path: string | null, defaultValue: null) => {
-        const valueAtPath = _.isEmpty(path)
-          ? value
-          : _.get(value, path);
-        return valueAtPath != null
-          ? valueAtPath
-          : defaultValue;
-      },
+        // Gets value from this node through to path
+        getValue: (path: string | null, defaultValue: null) => {
+          const valueAtPath = _.isEmpty(path)
+            ? value
+            : _.get(value, path);
+          return valueAtPath != null
+            ? valueAtPath
+            : defaultValue;
+        },
 
-      // gets value from the root of the object, following path
-      getValueFromRoot: (path: string | null, defaultRootValue: null) => {
-        const valueAtPath = _.isEmpty(path)
-          ? rootValue
-          : defaultRootValue;
-        return valueAtPath != null
-          ? valueAtPath
-          : defaultRootValue;
-      },
-    }),
-    arrayMapper: (value: any, path: string, rootValue: any) => ({
-      ...tryInvoke(extend, 'arrayMapper', [value, path, rootValue], {}),
+        // gets value from the root of the object, following path
+        getValueFromRoot: (path: string | null, defaultRootValue: null) => {
+          const valueAtPath = _.isEmpty(path)
+            ? rootValue
+            : defaultRootValue;
+          return valueAtPath != null
+            ? valueAtPath
+            : defaultRootValue;
+        },
+      }),
+    },
+    arrayMapper: {
+      apply: (value: any, path: string, rootValue: any) => ({
+        ...tryInvoke(extend, 'arrayMapper.apply', [value, path, rootValue], {}),
 
-      // Pushes if index is not specified
-      addOrPushItem: (index, value: any = null) => {
-        const newArrayValue = value || [];
+        // Pushes if index is not specified
+        addOrPushItem: (index, value: any = null) => {
+          const newArrayValue = value || [];
 
-        if (index == null) {
-          newArrayValue.push(index);
-        } else {
-          newArrayValue.splice(index, 0, value);
-        }
+          if (index == null) {
+            newArrayValue.push(index);
+          } else {
+            newArrayValue.splice(index, 0, value);
+          }
 
-        const newRootValue = _.set(rootValue, path, newArrayValue);
-        setValueFromRoot(newRootValue);
-      },
+          setValueToObj(newArrayValue, path);
+        },
 
-      // Pops if index is not specified
-      removeOrPopItem: (index) => {
-        const newArrayValue = value || [];
+        // Pops if index is not specified
+        removeOrPopItem: (index) => {
+          const newArrayValue = value || [];
 
-        if (index == null) {
-          newArrayValue.pop();
-        } else {
-          newArrayValue.splice(index, 1);
-        }
+          if (index == null) {
+            newArrayValue.pop();
+          } else {
+            newArrayValue.splice(index, 1);
+          }
 
-        const newRootValue = _.set(rootValue, path, newArrayValue);
-        setValueFromRoot(newRootValue);
-      },
-    }),
-    objectMapper: (value: any, path: string, rootValue: any, objectMapper: ObjectMapper<R>) => ({
-      ...tryInvoke(extend, 'objectMapper', [value, path, rootValue], {}),
-      fields: objectMapper
-        .getChildObjectMapper(path)
-        .apply(value)
-    }),
-    primitiveMapper: (value: any, path: string, rootValue: any) => ({
-      ...tryInvoke(extend, 'primitiveMapper', [value, path, rootValue], {}),
-    }),
+          setValueToObj(newArrayValue, path);
+        },
+      })
+    },
+    objectMapper: {
+      apply: (value: any, path: string, rootValue: any, objectMapper: ObjectMapper<R>) => ({
+        ...tryInvoke(extend, 'objectMapper.apply', [value, path, rootValue], {}),
+        fields: objectMapper
+          .getChildObjectMapper(path)
+          .apply(value)
+      })
+    },
+    primitiveMapper: {
+      apply: (value: any, path: string, rootValue: any) => ({
+        ...tryInvoke(extend, 'primitiveMapper.apply', [value, path, rootValue], {}),
+      })
+    },
   };
 }
 

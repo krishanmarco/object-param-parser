@@ -3,12 +3,15 @@ import * as _ from 'lodash';
 import { mergeObject } from '../lib/HelperFunctions';
 import { PathHelper } from '../lib/PathHelper';
 
-export type TObjectMapperMapper<R> = (
-  value: any,
-  path: string,
-  rootValue: R,
-  paramMapper: ObjectMapper<R>,
-) => any;
+export type TObjectMapperMapper<R> = {
+  apply: (
+    value: any,
+    path: string,
+    rootValue: R,
+    paramMapper: ObjectMapper<R>,
+  ) => any;
+  defaultValue?: any;
+}
 
 export type TObjectMapperMappers<R> = {
   path?: string;
@@ -80,7 +83,7 @@ export class ObjectMapper<R> {
 
     // Duplicate all the mappers to the children
     const duplicatedParamsObj = PathHelper.reduceParentToChildren(
-      expandedParams.map(({ path }) => path),
+      _.map(expandedParams, 'path'),
       _.keyBy(expandedParams, 'path'),
       (acc, parentPath, childPath) => {
         const parentObj = _.get(acc, parentPath);
@@ -149,8 +152,12 @@ export class ObjectMapper<R> {
     }
 
     return mappersToApply
-      .reduce((acc, mapper) => {
-        const mapped = mapper(itemValue, path, data, this);
+      .reduce((acc, mapper: TObjectMapperMapper<R>) => {
+        const value = itemValue != null
+          ? itemValue
+          : mapper.defaultValue;
+
+        const mapped = mapper.apply(value, path, data, this);
         return Object.assign(acc, mapped);
       }, {});
   }

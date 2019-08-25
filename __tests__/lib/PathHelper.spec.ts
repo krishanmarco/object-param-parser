@@ -9,6 +9,10 @@ describe('lib/PathHelper', () => {
     expect(PathHelper.getParentPath('a')).toBe('');
     expect(PathHelper.getParentPath('a.b.')).toBe('a');
     expect(PathHelper.getParentPath(null)).toBe(null);
+    expect(PathHelper.getParentPath('a.b[0]')).toBe('a.b');
+    expect(PathHelper.getParentPath('a.b[12]')).toBe('a.b');
+    expect(PathHelper.getParentPath('a.b[12][10]')).toBe('a.b[12]');
+    expect(PathHelper.getParentPath('a.b[12][10].x')).toBe('a.b[12][10]');
   });
 
   it('Should check if isParentPath correctly', () => {
@@ -24,6 +28,8 @@ describe('lib/PathHelper', () => {
     expect(PathHelper.isParentPath('.user', 'user.name')).toBe(true);
     expect(PathHelper.isParentPath('user', 'user.name.a.b')).toBe(true);
     expect(PathHelper.isParentPath('user.name', 'user.name.a.b')).toBe(true);
+    expect(PathHelper.isParentPath('user.name[0]', 'user.name[0].y')).toBe(true);
+    expect(PathHelper.isParentPath('user.name[0].x', 'user.name[1]')).toBe(false);
   });
 
   it('Should reduceParentToChildren correctly', () => {
@@ -34,10 +40,13 @@ describe('lib/PathHelper', () => {
         'a.b.c.d',
         'b',
         'b.c.d',
+        'a.z[0]',
+        'a.z[1]'
       ],
       {
         a: 1,
         'b.c': 0,
+        'a.z': [],    // todo:
       },
       (acc, parentPath, childPath) => {
         const parentObj = _.get(acc, parentPath);
@@ -54,6 +63,8 @@ describe('lib/PathHelper', () => {
       'a.b': 1,
       'a.b.c': 1,
       'a.b.c.d': 1,
+      'a.z[0]': 1,
+      'a.z[1]': 1,
       'b.c': 0,
       'b.c.d': 0,
     });
@@ -97,6 +108,41 @@ describe('lib/PathHelper', () => {
       'v[1].b[2]',
       'v[2].b',
     ]);
+  });
+
+  it('Should pathToKeys correctly', () => {
+    expect(PathHelper.pathToKeys('a.b.c')).toEqual(['a', 'b', 'c']);
+    expect(PathHelper.pathToKeys('')).toEqual(['']);
+    expect(PathHelper.pathToKeys('a[0][1][2].b')).toEqual(['a', '0', '1', '2', 'b']);
+    expect(PathHelper.pathToKeys('a[0].x[1100][2].x')).toEqual(['a', '0', 'x', '1100', '2', 'x']);
+  });
+
+  it('Should keysToPath correctly', () => {
+    expect(PathHelper.keysToPath(['a', 'b', 'c'])).toBe('a.b.c');
+    expect(PathHelper.keysToPath([''])).toBe('');
+    expect(PathHelper.keysToPath(['a', '0', '1', '2', 'b'])).toBe('a[0][1][2].b');
+    expect(PathHelper.keysToPath(['a', '0', 'x', '1100', '2', 'x'])).toBe('a[0].x[1100][2].x');
+  });
+
+  it('Should pathToKeys and keysToPath be symmetric', () => {
+    [
+      'a.b.c[0]',
+      'a.b.c[0][1]',
+      'a.b.c[0][1].x',
+      'a.b.c[0][1][333]',
+      'a[0]',
+    ].forEach(path => {
+      expect(PathHelper.keysToPath(PathHelper.pathToKeys(path))).toBe(path);
+    });
+    [
+      ['a', 'b', '0', '1'],
+      ['a', 'b', '0', '1', 'x', 'z'],
+      ['a', 'b', '0', '1', 'x', 'zzz'],
+      ['a', 'b', '100'],
+      ['a', '0'],
+    ].forEach(path => {
+      expect(PathHelper.pathToKeys(PathHelper.keysToPath(path))).toEqual(path);
+    });
   });
 
 });

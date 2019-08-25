@@ -2,6 +2,7 @@ import React from 'react';
 import './App.css';
 import { connect, Provider } from 'react-redux';
 import { Store } from './Store';
+import { getLoginFormObjectMapper } from './LoginForm';
 
 function App({loginForm}) {
   return (
@@ -13,7 +14,13 @@ function App({loginForm}) {
 
 const ConnectedApp = connect(
   (state) => ({
-    loginForm: {'a': 'bv'}
+    loginFormValue: state.reducer.loginForm,
+  }),
+  (dispatch) => ({
+    dispatch
+  }),
+  (stateProps, dispatchProps, ownProps) => ({
+    loginForm: getLoginFormObjectMapper(stateProps.loginFormValue, dispatchProps.dispatch)
   })
 )(App);
 

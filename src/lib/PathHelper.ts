@@ -3,17 +3,19 @@ import * as _ from 'lodash';
 
 export class PathHelper {
 
-  static getParentPath(inChildPath: string): string | null {
-    if (_.isEmpty(inChildPath)) {
+  static getParentPath(childPath: string): string | null {
+    if (_.isEmpty(childPath)) {
       return null;
     }
 
-    const childPath = _.trim(inChildPath, '.');
-
-    const parentPaths = childPath.split('.');
+    // Map the string path to access keys
+    // Get parent by removing the last one
+    // Map back to string path
+    const parentPaths = PathHelper.pathToKeys(childPath);
     parentPaths.splice(-1);
-
-    return parentPaths.join('.');
+    return !_.isEmpty(parentPaths)
+      ? PathHelper.keysToPath(parentPaths)
+      : "";
   }
 
   static isParentPath(inParentPath: string, inChildPath: string): boolean {
@@ -30,7 +32,7 @@ export class PathHelper {
       return false;
     }
 
-    for (let i  = 0; i < parentPaths.length; i++) {
+    for (let i = 0; i < parentPaths.length; i++) {
       if (parentPaths[i] !== childPaths[i]) {
         return false;
       }
@@ -50,8 +52,10 @@ export class PathHelper {
                                    apply: (acc: T, parentPath: string, childPath: string) => T): T {
     const subPaths = _(paths)
       .flatMap(path => PathHelper.applyToExpandedSubPaths(path))
-      .sort((a, b) => a.length - b.length)
-      .sortedUniq()
+      .map(PathHelper.pathToKeys)
+      .sort((a, b) => (<any>a).length - (<any>b).length)
+      .map(PathHelper.keysToPath)
+      .uniq()
       .value();
 
     return (<any[]>subPaths).reduce((acc, childPath) => {
@@ -90,18 +94,37 @@ export class PathHelper {
     });
   }
 
-  static expandWildcardsInItems(params: {path: string}[], data?: any): any {
+  static expandWildcardsInItems(params: { path: string }[], data?: any): any {
     return params.reduce((acc, currentItem) => {
       const expandedWildcards = PathHelper.expandWildcardsInPath(currentItem.path, data);
 
       expandedWildcards.forEach((expandedPath) => {
         acc.push({
           ..._.cloneDeep(currentItem),
-          path: expandedPath
+          path: expandedPath,
         });
       });
 
       return acc;
     }, []);
+  }
+
+  static pathToKeys(path: string) {
+    return _.trim(path, '.')
+      .split(/\.|\[/)
+      .map(x => _.trim(x, ']'));
+  }
+
+   static keysToPath(keys: string[]) {
+    return (keys || []).reduce((str, value) => {
+      if (str == null) {
+        return value;
+      }
+
+      return !isNaN(<any>value)
+        ? `${str}[${value}]`
+        : `${str}.${value}`;
+
+    }, null);
   }
 }

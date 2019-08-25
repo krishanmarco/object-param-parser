@@ -27,6 +27,7 @@
     "no-reserved-keywords": false,
     "underscore-consistent-invocation": false,
     "no-increment-decrement": false,
+    "variable-name": false,
     "function-name": false,
     "no-unnecessary-class": false,
     "no-single-line-block-comment": false,

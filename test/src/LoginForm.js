@@ -1,5 +1,5 @@
-import { ObjectMapper } from '../../src/mappers/ObjectMapper';
-import { buildReadWriteObjectMapper } from '../../src/mappers/ReadWriteObjectMapper';
+import { buildReduxReadWriteObjectMapper } from './Store';
+import { ObjectMapper } from './lib/om/dist/mappers/ObjectMapper';
 
 export const LoginFormSchema = {
   'user.email': {
@@ -40,13 +40,16 @@ let value = {
     email: 'krishanmarco@live.com'
   }
 };
-//
-// const objectMapper = new ObjectMapper()
-//   .map('', buildReadWriteObjectMapper(v => value = v))
-//   .map('user.email')
-//   .map('user.password')
-//   .map('tags[*]')
-//   .map('friends[*].email')
-//   .map('timezone');
-//
-// // console.log(objectMapper.apply(value));
+
+export function getLoginFormObjectMapper(loginFormValue, dispatch) {
+  return new ObjectMapper()
+    .map('', buildReduxReadWriteObjectMapper('something', dispatch))
+    .map('user.email')
+    .map('user.password')
+    .map('tags[*]')
+    .map('friends[*].email')
+    .map('timezone')
+    .apply(loginFormValue);
+}
+
+// console.log(loginFormObjectMapper.apply(value));
