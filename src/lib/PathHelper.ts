@@ -42,14 +42,21 @@ export class PathHelper {
   }
 
   static applyToExpandedSubPaths<T>(path: string, apply: (subPath: string) => T = _.identity): T[] {
-    const keys = (_.trim(path, '.') || '').split('.');
-    return keys.map((_, idx) => apply([...keys].splice(0, idx + 1).join('.')));
+    const keys = PathHelper.pathToKeys(path);
+    return keys.map((_, idx) => {
+      const childKeys = [...keys].splice(0, idx + 1);
+      const childPath = PathHelper.keysToPath(childKeys);
+      return apply(childPath)
+    });
   }
 
 
   static reduceParentToChildren<T>(paths: string[],
                                    initialValue: T,
                                    apply: (acc: T, parentPath: string, childPath: string) => T): T {
+    // Expand each path to it's sub paths
+    // Order by depth ASC (Parents first)
+    // Make keys unique
     const subPaths = _(paths)
       .flatMap(path => PathHelper.applyToExpandedSubPaths(path))
       .map(PathHelper.pathToKeys)
@@ -58,6 +65,8 @@ export class PathHelper {
       .uniq()
       .value();
 
+    // Reduce ASC, this means that given a path (child) it's parent already
+    // has it's final value
     return (<any[]>subPaths).reduce((acc, childPath) => {
       return apply(acc, PathHelper.getParentPath(childPath), childPath);
     }, initialValue);
@@ -115,7 +124,7 @@ export class PathHelper {
       .map(x => _.trim(x, ']'));
   }
 
-   static keysToPath(keys: string[]) {
+  static keysToPath(keys: string[]) {
     return (keys || []).reduce((str, value) => {
       if (str == null) {
         return value;

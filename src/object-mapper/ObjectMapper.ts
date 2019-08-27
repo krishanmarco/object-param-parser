@@ -1,20 +1,18 @@
 /** Created by Krishan Marco Madan <krishanmarcomadan@gmail.com> 13/04/19 - 12.29 * */
 import * as _ from 'lodash';
-import { mergeObject } from '../lib/HelperFunctions';
+import { mergeObjectWithConcat, safeInsertValueToPath, safePathGet } from '../lib/HelperFunctions';
 import { PathHelper } from '../lib/PathHelper';
 
-export type TObjectMapperMapper<R> = {
-  apply: (
-    value: any,
-    path: string,
-    rootValue: R,
-    paramMapper: ObjectMapper<R>,
-  ) => any;
-  defaultValue?: any;
-}
+export type TObjectMapperMapper<R> = (
+  value: any,
+  path: string,
+  rootValue: R,
+  paramMapper: ObjectMapper<R>,
+) => any
 
 export type TObjectMapperMappers<R> = {
   path?: string;
+  defaultValue?: any;
   globalMapper?: TObjectMapperMapper<R>;     // Object mapping that gets applied to all values
   arrayMapper?: TObjectMapperMapper<R>;      // Object mapping that gets applied to arrays
   objectMapper?: TObjectMapperMapper<R>;     // Object mapping that gets applied to objects
@@ -22,10 +20,10 @@ export type TObjectMapperMappers<R> = {
 }
 
 export class ObjectMapper<R> {
-  private params?: TObjectMapperMappers<R>[];
+  private params?: {[path: string]: TObjectMapperMappers<R>};
 
   constructor() {
-    this.params = [];
+    this.params = {};
     this.map = this.map.bind(this);
     this.addAll = this.addAll.bind(this);
     this.add = this.add.bind(this);
@@ -63,14 +61,14 @@ export class ObjectMapper<R> {
   }
 
   add(mappers?: TObjectMapperMappers<R>): ObjectMapper<R> {
-    this.params.push(mappers);
+    this.params[mappers.path || ''] = mappers;
     return this;
   }
 
   getChildObjectMapper(parentPath: string): ObjectMapper<any> {
     const childObjectMapper = new ObjectMapper<any>();
 
-    this.params
+    Object.values(this.params)
       .filter(({ path: childPath }) => ObjectMapper.isParentPath(parentPath, childPath))
       .forEach(childObjectMapper.add);
 
@@ -79,7 +77,8 @@ export class ObjectMapper<R> {
 
   apply(data?: any): any {
     // Expand all the wildcards in the paths
-    const expandedParams = PathHelper.expandWildcardsInItems(<{ path: string }[]>this.params, data);
+    const paramsArr = <{ path: string }[]>Object.values(this.params);
+    const expandedParams = PathHelper.expandWildcardsInItems(paramsArr, data);
 
     // Duplicate all the mappers to the children
     const duplicatedParamsObj = PathHelper.reduceParentToChildren(
@@ -87,52 +86,56 @@ export class ObjectMapper<R> {
       _.keyBy(expandedParams, 'path'),
       (acc, parentPath, childPath) => {
         const parentObj = _.get(acc, parentPath);
+        const childObj = expandedParams[childPath];
+
         if (parentObj != null) {
           acc[childPath] = {
             ..._.cloneDeep(parentObj),
+            ...(childObj != null ? childObj : {}),
             path: childPath,
           };
         }
+
         return acc;
       },
     );
 
     // For all params that are nested, apply
     const nestedMappedObject = Object.values(duplicatedParamsObj)
-      .filter(({ path }) => !_.isEmpty(path))
-      .reduce((acc, currentItem) => {
+      .reduce((acc, params: TObjectMapperMappers<R>) => {
         const {
+          defaultValue,
           path,
-        } = currentItem;
+        } = params;
 
-        const mapped = this.applyMappers(data, currentItem, _.get(data, path));
-        return mergeObject(acc, _.set({}, path, mapped));
+        const itemValue = safePathGet(data, path, defaultValue);
+
+        // Apply the mappers
+        const mapped = this.applyMappers(data, params, itemValue);
+
+        // Expand the item into a new object
+        const expanded = safeInsertValueToPath(mapped, path);
+
+        // Return the merged result
+        return _.merge(acc, expanded);
       }, {});
 
-    // For all params that have path equal to '' apply this to the root
-    const rootMappedObject = this.params
-      .filter(({ path }) => _.isEmpty(path))
-      .reduce((acc, currentItem) => {
-        return {
-          ...acc,
-          ...this.applyMappers(data, currentItem, data),
-        };
-      }, {});
-
-    return {
-      ...rootMappedObject,
-      ...nestedMappedObject,
-    };
+    return nestedMappedObject;
   }
 
   private applyMappers(data: any, params: TObjectMapperMappers<R>, itemValue: any) {
     const {
       path,
+      defaultValue,
       globalMapper,
       arrayMapper,
       objectMapper,
       primitiveMapper,
     } = params;
+
+    const value = itemValue != null
+      ? itemValue
+      : defaultValue;
 
     const mappersToApply = [];
 
@@ -141,7 +144,7 @@ export class ObjectMapper<R> {
 
     // Check for arrays before objects
     // Arrays are also objects and should mutually exclude
-    if (_.isArray(itemValue)) {
+    if (this.isItemArray(itemValue, path)) {
       arrayMapper && mappersToApply.push(arrayMapper);
 
     } else if (_.isObject(itemValue)) {
@@ -151,15 +154,26 @@ export class ObjectMapper<R> {
       primitiveMapper && mappersToApply.push(primitiveMapper);
     }
 
-    return mappersToApply
-      .reduce((acc, mapper: TObjectMapperMapper<R>) => {
-        const value = itemValue != null
-          ? itemValue
-          : mapper.defaultValue;
+    return mappersToApply.reduce((acc, apply: TObjectMapperMapper<R>) => {
 
-        const mapped = mapper.apply(value, path, data, this);
-        return Object.assign(acc, mapped);
-      }, {});
+      const mapped = apply(value, path, data, this);
+      return mergeObjectWithConcat(acc, mapped);
+    }, {});
+  }
+
+  private isItemArray(value: any, path: string): boolean {
+    // If this value is an array then we already know
+    if (_.isArray(value)) {
+      return true;
+    }
+
+    // The item is not an array so it's most likely null
+    // Try figure out if it's an array based on the path
+    const allPaths = Object.keys(this.params);
+    return _.some(allPaths, (paramPath) => {
+      // If this is true in any case we can say this item is an array
+      return paramPath.startsWith(`${path}[`);
+    })
   }
 
 }

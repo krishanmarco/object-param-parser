@@ -32,7 +32,21 @@ describe('lib/PathHelper', () => {
     expect(PathHelper.isParentPath('user.name[0].x', 'user.name[1]')).toBe(false);
   });
 
+  it('Should applyToExpandedSubPaths correctly', () => {
+    expect(PathHelper.applyToExpandedSubPaths('a')).toEqual(['a']);
+    expect(PathHelper.applyToExpandedSubPaths('a.b')).toEqual(['a', 'a.b']);
+    expect(PathHelper.applyToExpandedSubPaths('a.b.c')).toEqual(['a', 'a.b', 'a.b.c']);
+    expect(PathHelper.applyToExpandedSubPaths('a[0]')).toEqual(['a', 'a[0]']);
+    expect(PathHelper.applyToExpandedSubPaths('a[0][11]')).toEqual(['a', 'a[0]', 'a[0][11]']);
+  });
+
   it('Should reduceParentToChildren correctly', () => {
+    const initialValue = {
+      'a': 0,
+      'b.c': 1,
+      'a.z': 2,
+    };
+
     expect(PathHelper.reduceParentToChildren(
       [
         'a',
@@ -43,30 +57,33 @@ describe('lib/PathHelper', () => {
         'a.z[0]',
         'a.z[1]'
       ],
-      {
-        a: 1,
-        'b.c': 0,
-        'a.z': [],    // todo:
-      },
+      initialValue,
       (acc, parentPath, childPath) => {
         const parentObj = _.get(acc, parentPath);
-        if (parentObj == null) {
-          return acc;
+        const childObj = initialValue[childPath];
+
+        if (childObj != null) {
+          // Dont use lodash, we want dot-notation as keys
+          acc[childPath] = childObj;
+
+        } else if (parentObj != null) {
+          // Dont use lodash, we want dot-notation as keys
+          acc[childPath] = _.cloneDeep(parentObj);
+
         }
 
-        // Dont use lodash, we want dot-notation as keys
-        acc[childPath] = _.cloneDeep(parentObj);
         return acc;
       },
     )).toEqual({
-      'a': 1,
-      'a.b': 1,
-      'a.b.c': 1,
-      'a.b.c.d': 1,
-      'a.z[0]': 1,
-      'a.z[1]': 1,
-      'b.c': 0,
-      'b.c.d': 0,
+      'a': 0,
+      'a.b': 0,
+      'a.b.c': 0,
+      'a.b.c.d': 0,
+      'b.c': 1,
+      'b.c.d': 1,
+      'a.z': 2,
+      'a.z[0]': 2,
+      'a.z[1]': 2,
     });
   });
 

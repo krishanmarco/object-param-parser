@@ -9,15 +9,15 @@ export {
 
 export {
   ObjectMapper,
-} from './mappers/ObjectMapper';
+} from './object-mapper/ObjectMapper';
 
 export {
   buildReadWriteObjectMapper
-} from './mappers/ReadWriteObjectMapper';
+} from './object-mapper/ReadWriteObjectMapper';
 
 export {
   buildReduxReadWriteObjectMapper
-} from './mappers/ReduxReadWriteObjectMapper';
+} from './object-mapper/ReduxReadWriteObjectMapper';
 
 export {
   ErrorHandlers,

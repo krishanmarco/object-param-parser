@@ -1,6 +1,6 @@
 /** Created by Krishan Marco Madan <krishanmarcomadan@gmail.com> 13/04/19 - 12.29 * */
 import * as _fp from 'lodash/fp';
-import * as _ from 'lodash/fp';
+import * as _ from 'lodash';
 import {ObjectMapper} from "./ObjectMapper";
 import {buildReadWriteObjectMapper} from "./ReadWriteObjectMapper";
 
@@ -10,16 +10,21 @@ export function buildReduxReadWriteObjectMapper<R>(key: string, objectMapper: Ob
   const actionKey = key.toUpperCase();
 
   function reducer(state = initialState, {type, value, path}) {
+    let result = state;
+
     switch (type) {
       case `${REDUX_READ_WRITE_OBJECT_MAPPER_SET_ACTION}_${actionKey}`:
-        return !_.isEmpty(path)
-          ? _fp.set(value, path, state)
+        result = !_.isEmpty(path)
+          ? _fp.set(path, value, state)
           : {...value};
+        console.log("reducerResult, action", {type, value, path, result});
+        break;
     }
-    return state;
+
+    return result;
   }
 
-  function setAction(value, path) {
+  function createSetAction(value, path) {
     return {
       type: `${REDUX_READ_WRITE_OBJECT_MAPPER_SET_ACTION}_${actionKey}`,
       value,
@@ -33,7 +38,8 @@ export function buildReduxReadWriteObjectMapper<R>(key: string, objectMapper: Ob
       (state) => {
         const val = !_.isEmpty(stateSubPath)
           ? _.get(state, stateSubPath)
-          : stateSubPath;
+          : state;
+
         return val != null
           ? val
           : {};
@@ -41,15 +47,11 @@ export function buildReduxReadWriteObjectMapper<R>(key: string, objectMapper: Ob
 
       // mapDispatchToProps
       (dispatch) => ({
-        dispatch
+        dispatchSetAction: (value, path) => dispatch(createSetAction(value, path))
       }),
 
       // mergeProps
-      (stateProps, {dispatch}, ownProps) => {
-        function dispatchSetAction(value, path) {
-          return dispatch(setAction(value, path));
-        }
-
+      (stateProps, {dispatchSetAction}, ownProps) => {
         return {
           ...ownProps,
           [key]: objectMapper
