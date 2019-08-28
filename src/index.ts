@@ -20,6 +20,10 @@ export {
 } from './object-mapper/ReduxReadWriteObjectMapper';
 
 export {
+  applyReadWriteObjectMapper
+} from './object-mapper/ReactHookReadWriteObjectManager';
+
+export {
   ErrorHandlers,
 } from './lib/ErrorHandlers';
 
