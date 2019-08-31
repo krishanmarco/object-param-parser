@@ -3,6 +3,7 @@ import * as _fp from 'lodash/fp';
 import * as _ from 'lodash';
 import {ObjectMapper} from "./ObjectMapper";
 import {buildReadWriteObjectMapper} from "./ReadWriteObjectMapper";
+import {setToObjectFp} from "../lib/HelperFunctions";
 
 const REDUX_READ_WRITE_OBJECT_MAPPER_SET_ACTION = 'REDUX_READ_WRITE_OBJECT_MAPPER_SET_ACTION';
 
@@ -10,18 +11,12 @@ export function buildReduxReadWriteObjectMapper<R>(key: string, objectMapper: Ob
   const actionKey = key.toUpperCase();
 
   function reducer(state = initialState, {type, value, path}) {
-    let result = state;
-
     switch (type) {
       case `${REDUX_READ_WRITE_OBJECT_MAPPER_SET_ACTION}_${actionKey}`:
-        result = !_.isEmpty(path)
-          ? _fp.set(path, value, state)
-          : {...value};
-        console.log("reducerResult, action", {type, value, path, result});
-        break;
+        return setToObjectFp(state, value, path);
     }
 
-    return result;
+    return state;
   }
 
   function createSetAction(value, path) {

@@ -24,6 +24,9 @@ export function buildReadWriteObjectMapper<R>(setValueToObj: TSetValue, extend: 
 
       // Sets values without middlewares
       setValue: (newValue) => {
+        console.log("value", value);
+        console.log("path", path);
+        console.log("rootValue", rootValue);
         setValueToObj(newValue, path);
       },
 

@@ -6,6 +6,7 @@ import { ParserErrorBuilders } from '../errors/ParserErrors';
 import { TErrorHandler } from '../lib/ErrorHandlers';
 import { Handler, TParserMiddleware } from '../lib/Handler';
 import { PathHelper } from '../lib/PathHelper';
+import {safeInsertValueToPath} from "../lib/HelperFunctions";
 
 export type TParamParserOptions = {
   path?: string;
@@ -132,7 +133,7 @@ export class ParamParser {
         : _.last(path.split('.'));
 
       // Set into result
-      const mergeObj = _.set({}, key, sanitizedValue);
+      const mergeObj = safeInsertValueToPath(sanitizedValue, key);
       const merged = _.mergeWith(acc, mergeObj, (objValue, srcValue) => {
         if (_.isArray(objValue)) {
           return objValue

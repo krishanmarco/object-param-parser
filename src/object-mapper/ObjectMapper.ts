@@ -2,6 +2,8 @@
 import * as _ from 'lodash';
 import { mergeObjectWithConcat, safeInsertValueToPath, safePathGet } from '../lib/HelperFunctions';
 import { PathHelper } from '../lib/PathHelper';
+import { TParamParserOptions } from "../parsers/ParamParser";
+import { Parser } from "../parsers/Parser";
 
 export type TObjectMapperMapper<R> = (
   value: any,
@@ -10,9 +12,7 @@ export type TObjectMapperMapper<R> = (
   paramMapper: ObjectMapper<R>,
 ) => any
 
-export type TObjectMapperMappers<R> = {
-  path?: string;
-  defaultValue?: any;
+export type TObjectMapperMappers<R> = TParamParserOptions & {
   globalMapper?: TObjectMapperMapper<R>;     // Object mapping that gets applied to all values
   arrayMapper?: TObjectMapperMapper<R>;      // Object mapping that gets applied to arrays
   objectMapper?: TObjectMapperMapper<R>;     // Object mapping that gets applied to objects
@@ -81,12 +81,13 @@ export class ObjectMapper<R> {
     const expandedParams = PathHelper.expandWildcardsInItems(paramsArr, data);
 
     // Duplicate all the mappers to the children
-    const duplicatedParamsObj = PathHelper.reduceParentToChildren(
+    const keyedExpandedParams = _.keyBy(expandedParams, 'path');
+    const extendedParamsObj = PathHelper.reduceParentToChildren(
       _.map(expandedParams, 'path'),
-      _.keyBy(expandedParams, 'path'),
+      keyedExpandedParams,
       (acc, parentPath, childPath) => {
         const parentObj = _.get(acc, parentPath);
-        const childObj = expandedParams[childPath];
+        const childObj = keyedExpandedParams[childPath];
 
         if (parentObj != null) {
           acc[childPath] = {
@@ -100,18 +101,32 @@ export class ObjectMapper<R> {
       },
     );
 
+    // Override'as' and 'select', these are disabled in ObjectMapper
+    // Setting 'as' to path will mean that the result structure can't be changed
+    const parserParams = _(expandedParams)
+      .map(item => ({
+        ...item,
+        as: item.path,
+        select: true,
+      }))
+      .reverse()
+      .value();
+
+    // Apply the ParamParser to the params, don't use the extended params
+    const parsedData = Parser.parse(data, parserParams);
+    console.log(parserParams, data, parsedData);
+
     // For all params that are nested, apply
-    const nestedMappedObject = Object.values(duplicatedParamsObj)
+    const nestedMappedObject = Object.values(extendedParamsObj)
       .reduce((acc, params: TObjectMapperMappers<R>) => {
         const {
-          defaultValue,
+          def,
           path,
         } = params;
-
-        const itemValue = safePathGet(data, path, defaultValue);
+        const itemValue = safePathGet(parsedData, path, def);
 
         // Apply the mappers
-        const mapped = this.applyMappers(data, params, itemValue);
+        const mapped = this.applyMappers(parsedData, params, itemValue);
 
         // Expand the item into a new object
         const expanded = safeInsertValueToPath(mapped, path);
@@ -126,7 +141,7 @@ export class ObjectMapper<R> {
   private applyMappers(data: any, params: TObjectMapperMappers<R>, itemValue: any) {
     const {
       path,
-      defaultValue,
+      def,
       globalMapper,
       arrayMapper,
       objectMapper,
@@ -135,7 +150,7 @@ export class ObjectMapper<R> {
 
     const value = itemValue != null
       ? itemValue
-      : defaultValue;
+      : def;
 
     const mappersToApply = [];
 
@@ -155,7 +170,6 @@ export class ObjectMapper<R> {
     }
 
     return mappersToApply.reduce((acc, apply: TObjectMapperMapper<R>) => {
-
       const mapped = apply(value, path, data, this);
       return mergeObjectWithConcat(acc, mapped);
     }, {});

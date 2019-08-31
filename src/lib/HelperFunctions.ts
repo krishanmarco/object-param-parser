@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import * as _fp from 'lodash/fp';
 
 /**
  * Tries to invoke a function at a given path
@@ -43,4 +44,10 @@ export function safeInsertValueToPath(value: any, path: string, object: any = {}
   return !_.isEmpty(path)
     ? _.set(object, path, value)
     : value;
+}
+
+export function setToObjectFp(originalValue: any, valueToInsert: any, pathInResult: string, ): any {
+  return !_.isEmpty(pathInResult)
+    ? _fp.set(pathInResult, valueToInsert, originalValue)
+    : Object.assign({}, originalValue, valueToInsert)
 }
