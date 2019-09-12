@@ -78,3 +78,10 @@ router.get('/', (request, response) => {
     .parse(request);
 });
 ```
+
+
+### Running the example project
+```
+cd example
+yarn && yarn start
+```

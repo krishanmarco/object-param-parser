@@ -10,4 +10,8 @@ export const ErrorHandlers: { [name: string]: TErrorHandler } = {
     // Map the generic ParserError to a ParserHttpErrorBuilder and throw
     throw ParserHttpErrorBuilders[parserError.errorId](path, value);
   },
+
+  log: function(path: string, value: any, parserError: ParserError) {
+    console.log("ParamParser error", {path, value, parserError});
+  }
 };

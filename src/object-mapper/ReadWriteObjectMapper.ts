@@ -1,7 +1,7 @@
 /** Created by Krishan Marco Madan <krishanmarcomadan@gmail.com> 13/04/19 - 12.29 * */
 import * as _ from 'lodash';
-import { tryInvoke } from '../lib/HelperFunctions';
-import { TObjectMapperMappers } from './ObjectMapper';
+import {setToObjectFp, tryInvoke} from '../lib/HelperFunctions';
+import {ObjectMapper, TObjectMapperMappers} from './ObjectMapper';
 
 export type TSetValue = (value: any, path: string) => void;
 
@@ -24,9 +24,6 @@ export function buildReadWriteObjectMapper<R>(setValueToObj: TSetValue, extend: 
 
       // Sets values without middlewares
       setValue: (newValue) => {
-        console.log("value", value);
-        console.log("path", path);
-        console.log("rootValue", rootValue);
         setValueToObj(newValue, path);
       },
 
@@ -61,7 +58,7 @@ export function buildReadWriteObjectMapper<R>(setValueToObj: TSetValue, extend: 
         if (index == null) {
           newArrayValue.push(itemToPush);
         } else {
-          newArrayValue.splice(index, 0, itemToPush);
+          _.set(newArrayValue, index, itemToPush);
         }
 
         setValueToObj(newArrayValue, path);
@@ -90,7 +87,21 @@ export function buildReadWriteObjectMapper<R>(setValueToObj: TSetValue, extend: 
   };
 }
 
-// If also the serverParsingSchema is passed to the mapper then
-// fields are validated and sanitized on the fly
-// I.e. setValue validates and sanitizes
-// Set value to object => Run parser => Return object if parser succeeds
+export function parseAndSetDataInObjectPurely<R>(initialState, initialValue, path, objectMapper?: ObjectMapper<R>) {
+  // Expand this value into a new object using path
+  const expandedValue = _.set({}, path, initialValue);
+
+  // Only parse the value that has changed
+  // We don't need to parse the full state here
+  const parsedValue = objectMapper != null
+    ? objectMapper.parse(expandedValue)
+    : expandedValue;
+
+  // Get the final value from the parsed result
+  const value = _.get(parsedValue, path);
+
+  // Set the value into a new object
+  const newState = setToObjectFp(initialState, value, path);
+
+  return newState;
+}

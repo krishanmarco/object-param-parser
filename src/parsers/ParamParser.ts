@@ -1,11 +1,11 @@
 /** Created by Krishan Marco Madan <krishanmarcomadan@gmail.com> 13/04/19 - 12.29 * */
 import * as _ from 'lodash';
-import { Sanitizers, Validators } from '../';
-import { ParserErrorCodes, ParserErrorIds } from '../errors/ParserError';
-import { ParserErrorBuilders } from '../errors/ParserErrors';
-import { TErrorHandler } from '../lib/ErrorHandlers';
-import { Handler, TParserMiddleware } from '../lib/Handler';
-import { PathHelper } from '../lib/PathHelper';
+import {Sanitizers, Validators} from '../';
+import {ParserErrorCodes, ParserErrorIds} from '../errors/ParserError';
+import {ParserErrorBuilders} from '../errors/ParserErrors';
+import {TErrorHandler} from '../lib/ErrorHandlers';
+import {Handler, TParserMiddleware} from '../lib/Handler';
+import {PathHelper} from '../lib/PathHelper';
 import {safeInsertValueToPath} from "../lib/HelperFunctions";
 
 export type TParamParserOptions = {
@@ -34,11 +34,11 @@ export class ParamParser {
   }
 
   getAs(path: string, as: string, options?: TParamParserOptions): ParamParser {
-    return this.get(path, { ...options, as });
+    return this.get(path, {...options, as});
   }
 
   get(path: string, options?: TParamParserOptions): ParamParser {
-    return this.add({ ...options, path });
+    return this.add({...options, path});
   }
 
   addAll(tmpOptions: { [path: string]: TParamParserOptions } | string): ParamParser {
@@ -60,9 +60,20 @@ export class ParamParser {
 
   parse(data?: any): any {
     // Normalize this.params and pass to parseParams
-    const params = PathHelper.expandWildcardsInItems(<{ path: string }[]>this.params, data);
+    const params = PathHelper.reduceWildcardsInPaths(
+      _.map(this.params, 'path'),
+      (acc, _parentPath, expandedPath, index) => {
+        acc.push({
+          ..._.cloneDeep(this.params[index]),
+          path: expandedPath
+        });
+        return acc;
+      },
+      data,
+      []
+    );
 
-    return this.parseParams(params, data);
+    return this.parseParams(<{ path: string }[]>params, data);
   }
 
   private parseParams(params: TParamParserOptions[], data?: any): any {

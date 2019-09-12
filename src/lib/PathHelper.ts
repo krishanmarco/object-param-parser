@@ -2,6 +2,7 @@
 import * as _ from 'lodash';
 
 export class PathHelper {
+  static ARRAY_WILDCARD = '[*]';
 
   static getParentPath(childPath: string): string | null {
     if (_.isEmpty(childPath)) {
@@ -50,10 +51,53 @@ export class PathHelper {
     });
   }
 
+  /**
+   * [*] indicates generic array access
+   * If path contains [*] then we need to expand that to the indexes in data
+   * ---
+   * @param path
+   * @param data
+   */
+  static expandWildcardsInPath(path: string, data: any): string[] {
+    // Base case
+    if (!path.includes(PathHelper.ARRAY_WILDCARD)) {
+      return [path];
+    }
 
-  static reduceParentToChildren<T>(paths: string[],
-                                   initialValue: T,
-                                   apply: (acc: T, parentPath: string, childPath: string) => T): T {
+    // Expand the paths
+    const [p, ...rest] = path.split(PathHelper.ARRAY_WILDCARD);
+
+    // Add an extractor for each sub-item
+    const items = _.get(data, p, []);
+    if (items.length === 0) {
+      return [p];
+    }
+
+    // Recursively expand
+    return _.flatMap(items, (_, idx) => {
+      const expandedPath = `${p}[${idx}]${rest.join(PathHelper.ARRAY_WILDCARD)}`;
+      return PathHelper.expandWildcardsInPath(expandedPath, data);
+    });
+  }
+
+  static reduceWildcardsInPaths<T>(paths: string[],
+                                apply: Function,
+                                data: any = {},
+                                initialValue: T): T {
+    return (<any[]>paths).reduce((acc, parentPath, index) => {
+      const expandedWildcards = PathHelper.expandWildcardsInPath(parentPath, data);
+
+      expandedWildcards.forEach((expandedPath) => {
+        apply(acc, parentPath, expandedPath, index);
+      });
+
+      return acc;
+    }, initialValue)
+  }
+
+  static reduceParentsToChildren<T>(paths: string[],
+                                    apply: (acc: T, parentPath: string, childPath: string) => T,
+                                    initialValue: T): T {
     // Expand each path to it's sub paths
     // Order by depth ASC (Parents first)
     // Make keys unique
@@ -68,54 +112,9 @@ export class PathHelper {
     // Reduce ASC, this means that given a path (child) it's parent already
     // has it's final value
     return (<any[]>subPaths).reduce((acc, childPath) => {
-      return apply(acc, PathHelper.getParentPath(childPath), childPath);
-    }, initialValue);
-  }
-
-  /**
-   * [*] indicates generic array access
-   * If path contains [*] then we need to expand that to the indexes in data
-   * ---
-   * @param path
-   * @param data
-   */
-  static expandWildcardsInPath(path: string, data: any): string[] {
-    const wildcard = '[*]';
-
-    // Base case
-    if (!path.includes(wildcard)) {
-      return [path];
-    }
-
-    // Expand the paths
-    const [p, ...rest] = path.split(wildcard);
-
-    // Add an extractor for each sub-item
-    const items = _.get(data, p, []);
-    if (items.length === 0) {
-      return [p];
-    }
-
-    // Recursively expand
-    return _.flatMap(items, (_, idx) => {
-      const expandedPath = `${p}[${idx}]${rest.join(wildcard)}`;
-      return PathHelper.expandWildcardsInPath(expandedPath, data);
-    });
-  }
-
-  static expandWildcardsInItems(params: { path: string }[], data?: any): any {
-    return params.reduce((acc, currentItem) => {
-      const expandedWildcards = PathHelper.expandWildcardsInPath(currentItem.path, data);
-
-      expandedWildcards.forEach((expandedPath) => {
-        acc.push({
-          ..._.cloneDeep(currentItem),
-          path: expandedPath,
-        });
-      });
-
+      apply(acc, PathHelper.getParentPath(childPath), childPath);
       return acc;
-    }, []);
+    }, initialValue);
   }
 
   static pathToKeys(path: string) {
@@ -136,4 +135,5 @@ export class PathHelper {
 
     }, null);
   }
+
 }

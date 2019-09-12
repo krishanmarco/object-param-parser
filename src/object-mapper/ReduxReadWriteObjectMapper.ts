@@ -1,9 +1,7 @@
 /** Created by Krishan Marco Madan <krishanmarcomadan@gmail.com> 13/04/19 - 12.29 * */
-import * as _fp from 'lodash/fp';
 import * as _ from 'lodash';
 import {ObjectMapper} from "./ObjectMapper";
-import {buildReadWriteObjectMapper} from "./ReadWriteObjectMapper";
-import {setToObjectFp} from "../lib/HelperFunctions";
+import {buildReadWriteObjectMapper, parseAndSetDataInObjectPurely} from "./ReadWriteObjectMapper";
 
 const REDUX_READ_WRITE_OBJECT_MAPPER_SET_ACTION = 'REDUX_READ_WRITE_OBJECT_MAPPER_SET_ACTION';
 
@@ -13,7 +11,7 @@ export function buildReduxReadWriteObjectMapper<R>(key: string, objectMapper: Ob
   function reducer(state = initialState, {type, value, path}) {
     switch (type) {
       case `${REDUX_READ_WRITE_OBJECT_MAPPER_SET_ACTION}_${actionKey}`:
-        return setToObjectFp(state, value, path);
+        return parseAndSetDataInObjectPurely(state, value, path, objectMapper);
     }
 
     return state;

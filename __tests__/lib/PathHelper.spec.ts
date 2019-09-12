@@ -1,6 +1,6 @@
 /** Created by Krishan Marco Madan [krishanmarco@outlook.com] [http://www.krishanmadan.com] [29-Jun-18|4:43 PM] © */
 import * as _ from 'lodash';
-import { PathHelper } from '../../src/lib/PathHelper';
+import {PathHelper} from '../../src/lib/PathHelper';
 
 describe('lib/PathHelper', () => {
 
@@ -40,14 +40,14 @@ describe('lib/PathHelper', () => {
     expect(PathHelper.applyToExpandedSubPaths('a[0][11]')).toEqual(['a', 'a[0]', 'a[0][11]']);
   });
 
-  it('Should reduceParentToChildren correctly', () => {
+  it('Should reduceParentsToChildren correctly', () => {
     const initialValue = {
       'a': 0,
       'b.c': 1,
       'a.z': 2,
     };
 
-    expect(PathHelper.reduceParentToChildren(
+    expect(PathHelper.reduceParentsToChildren(
       [
         'a',
         'a.b',
@@ -57,7 +57,6 @@ describe('lib/PathHelper', () => {
         'a.z[0]',
         'a.z[1]'
       ],
-      initialValue,
       (acc, parentPath, childPath) => {
         const parentObj = _.get(acc, parentPath);
         const childObj = initialValue[childPath];
@@ -74,6 +73,7 @@ describe('lib/PathHelper', () => {
 
         return acc;
       },
+      initialValue,
     )).toEqual({
       'a': 0,
       'a.b': 0,
@@ -90,7 +90,7 @@ describe('lib/PathHelper', () => {
   it('Should expandWildcardsInPath correctly', () => {
     expect(PathHelper.expandWildcardsInPath(
       'a[*]',
-      { a: [0, 1, 2] },
+      {a: [0, 1, 2]},
     )).toEqual([
       'a[0]',
       'a[1]',
@@ -98,7 +98,7 @@ describe('lib/PathHelper', () => {
     ]);
     expect(PathHelper.expandWildcardsInPath(
       'v[*].b.x',
-      { v: [0, 3, 1] },
+      {v: [0, 3, 1]},
     )).toEqual([
       'v[0].b.x',
       'v[1].b.x',
@@ -106,7 +106,7 @@ describe('lib/PathHelper', () => {
     ]);
     expect(PathHelper.expandWildcardsInPath(
       'v[*].b[*].x',
-      { v: [{b: [1]}, {b: [1, 2]}, {b: []}] },
+      {v: [{b: [1]}, {b: [1, 2]}, {b: []}]},
     )).toEqual([
       'v[0].b[0].x',
       'v[1].b[0].x',
@@ -115,7 +115,7 @@ describe('lib/PathHelper', () => {
     ]);
     expect(PathHelper.expandWildcardsInPath(
       'v[*].b[*][*]',
-      { v: [{b: [[0, 1], [0]]}, {b: [[], [], []]}, {b: []}] },
+      {v: [{b: [[0, 1], [0]]}, {b: [[], [], []]}, {b: []}]},
     )).toEqual([
       'v[0].b[0][0]',
       'v[0].b[0][1]',
@@ -124,6 +124,38 @@ describe('lib/PathHelper', () => {
       'v[1].b[1]',
       'v[1].b[2]',
       'v[2].b',
+    ]);
+  });
+
+  it('Should reduceWildcardsInPaths correctly', () => {
+    expect(PathHelper.reduceParentsToChildren(
+      ['a.b.c.d.e', 'c'],
+      (acc, parentPath, childPath) => {
+        acc.push({parentPath, childPath});
+        return acc;
+      },
+      [])
+    ).toEqual([
+      {childPath: 'a', parentPath: ''},
+      {childPath: 'c', parentPath: ''},
+      {childPath: 'a.b', parentPath: 'a'},
+      {childPath: 'a.b.c', parentPath: 'a.b'},
+      {childPath: 'a.b.c.d', parentPath: 'a.b.c'},
+      {childPath: 'a.b.c.d.e', parentPath: 'a.b.c.d'},
+    ]);
+    expect(PathHelper.reduceParentsToChildren(
+      ['a', 'a.b', 'b.c.d'],
+      (acc, parentPath, childPath) => {
+        acc.push({parentPath, childPath});
+        return acc;
+      },
+      [])
+    ).toEqual([
+      {childPath: 'a', parentPath: ''},
+      {childPath: 'b', parentPath: ''},
+      {childPath: 'a.b', parentPath: 'a'},
+      {childPath: 'b.c', parentPath: 'b'},
+      {childPath: 'b.c.d', parentPath: 'b.c'},
     ]);
   });
 

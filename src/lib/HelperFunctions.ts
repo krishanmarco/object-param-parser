@@ -51,3 +51,22 @@ export function setToObjectFp(originalValue: any, valueToInsert: any, pathInResu
     ? _fp.set(pathInResult, valueToInsert, originalValue)
     : Object.assign({}, originalValue, valueToInsert)
 }
+
+// https://github.com/GeenenTijd/dotify
+export function dotify(obj) {
+  const res = {};
+  function recurse(obj, current = undefined) {
+    for (let key in obj) {
+      const value = obj[key];
+      const newKey = (current ? `${current}.${key}` : key);
+      if (value && typeof value === 'object') {
+        recurse(value, newKey);
+      } else {
+        res[newKey] = value;
+      }
+    }
+  }
+
+  recurse(obj);
+  return res;
+}
