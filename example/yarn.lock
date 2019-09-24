@@ -3563,15 +3563,15 @@ eslint-scope@^5.0.0:
     estraverse "^4.1.1"
 
 eslint-utils@^1.3.1:
-  version "1.4.0"
-  resolved "https://registry.npmjs.org/eslint-utils/-/eslint-utils-1.4.0.tgz#e2c3c8dba768425f897cf0f9e51fe2e241485d4c"
-  integrity sha512-7ehnzPaP5IIEh1r1tkjuIrxqhNkzUJa9z3R92tLJdZIVdWaczEhr3EbhGtsMrVxi1KeR8qA7Off6SWc5WNQqyQ==
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/eslint-utils/-/eslint-utils-1.4.2.tgz#166a5180ef6ab7eb462f162fd0e6f2463d7309ab"
+  integrity sha512-eAZS2sEUMlIeCjBeubdj45dmBHQwPHWyBcT1VSYB7o9x9WRRqKxyUoiXlRjyAwzN7YEzHJlYg0NmzDRWx6GP4Q==
   dependencies:
     eslint-visitor-keys "^1.0.0"
 
 eslint-visitor-keys@^1.0.0:
   version "1.1.0"
-  resolved "https://registry.npmjs.org/eslint-visitor-keys/-/eslint-visitor-keys-1.1.0.tgz#e2a82cea84ff246ad6fb57f9bde5b46621459ec2"
+  resolved "https://registry.yarnpkg.com/eslint-visitor-keys/-/eslint-visitor-keys-1.1.0.tgz#e2a82cea84ff246ad6fb57f9bde5b46621459ec2"
   integrity sha512-8y9YjtM1JBJU/A9Kc+SbaOV4y29sSWckBwMHa+FGtVj5gN/sbnKDf6xJUl+8g7FAij9LVaP8C24DUiH/f/2Z9A==
 
 eslint@^6.1.0:
@@ -6490,10 +6490,10 @@ object-keys@^1.0.11, object-keys@^1.0.12:
   resolved "https://registry.npmjs.org/object-keys/-/object-keys-1.1.1.tgz#1c47f272df277f3b1daf061677d9c82e2322c60e"
   integrity sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA==
 
-object-param-parser@2.0.0:
-  version "2.0.0"
-  resolved "https://registry.npmjs.org/object-param-parser/-/object-param-parser-2.0.0.tgz#4a959be8cc62d93aeeff4f959b5443d4dbbea13b"
-  integrity sha512-4AHAA+zanXTnZrS1vNRcYyKLayoBPvicClxVe8AA03VdY4RkasmW1yxox1clBr/ASZ4Xo30rlKOxuHoHP7hwsA==
+object-param-parser@2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/object-param-parser/-/object-param-parser-2.0.1.tgz#00296cd418b047ebc5d6d6b60baaeaf1d6a42311"
+  integrity sha512-sWRn9sHj6sA5xCNp0zXAgYelEiB5tyB9TRHJAV6VDf08CerMfHjQz0MaODA6uUmzioDaAHn1HL08959wejdtRA==
   dependencies:
     lodash "^4.17.11"
     tslib "~1.9.3"
