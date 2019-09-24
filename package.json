@@ -2,7 +2,7 @@
   "name": "object-param-parser",
   "author": "krishanmarco <krishanmarcomadan@gmail.com>",
   "main": "dist/index.js",
-  "version": "3s.0.0",
+  "version": "3.0.0",
   "description": "A URL state manager",
   "repository": {
     "type": "git",
@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "@types/jest": "^23.3.14",
-    "@types/lodash": "^4.14.136",
+    "@types/lodash": "^4.17.15",
     "@types/node": "^10.12.18",
     "@types/validator": "^10.11.0",
     "jest": "~23.6.0",
