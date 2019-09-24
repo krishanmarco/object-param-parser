@@ -8,6 +8,22 @@ export {
 } from './parsers/Parser';
 
 export {
+  ObjectMapper,
+} from './object-mapper/ObjectMapper';
+
+export {
+  buildReadWriteObjectMapper
+} from './object-mapper/ReadWriteObjectMapper';
+
+export {
+  buildReduxReadWriteObjectMapper
+} from './object-mapper/ReduxReadWriteObjectMapper';
+
+export {
+  applyReadWriteObjectMapper
+} from './object-mapper/ReactHookReadWriteObjectManager';
+
+export {
   ErrorHandlers,
 } from './lib/ErrorHandlers';
 

@@ -1,10 +1,12 @@
 /** Created by Krishan Marco Madan <krishanmarcomadan@gmail.com> 13/04/19 - 12.29 * */
 import * as _ from 'lodash';
-import {Sanitizers, Validators} from "../";
+import {Sanitizers, Validators} from '../';
 import {ParserErrorCodes, ParserErrorIds} from '../errors/ParserError';
 import {ParserErrorBuilders} from '../errors/ParserErrors';
 import {TErrorHandler} from '../lib/ErrorHandlers';
-import {Handler, TParserMiddleware} from "../lib/Handler";
+import {Handler, TParserMiddleware} from '../lib/Handler';
+import {PathHelper} from '../lib/PathHelper';
+import {safeInsertValueToPath} from "../lib/HelperFunctions";
 
 export type TParamParserOptions = {
   path?: string;
@@ -58,13 +60,20 @@ export class ParamParser {
 
   parse(data?: any): any {
     // Normalize this.params and pass to parseParams
-    const normalizedParams = this.params.reduce((normalizedParams, currentItem) => {
-      // Expand all wildcards (recursive)
-      return this.expandWildcards(data, normalizedParams, currentItem);
+    const params = PathHelper.reduceWildcardsInPaths(
+      _.map(this.params, 'path'),
+      (acc, _parentPath, expandedPath, index) => {
+        acc.push({
+          ..._.cloneDeep(this.params[index]),
+          path: expandedPath
+        });
+        return acc;
+      },
+      data,
+      []
+    );
 
-    }, this.params);
-
-    return this.parseParams(normalizedParams, data);
+    return this.parseParams(<{ path: string }[]>params, data);
   }
 
   private parseParams(params: TParamParserOptions[], data?: any): any {
@@ -114,7 +123,7 @@ export class ParamParser {
       // the sanitizers may mutate the value
       // We also need to coerce the value before passing it to the sanitizer
       const sanitizedValue = Handler
-        .reduceHandler(sanitize, (v, f) => Sanitizers.invoke(f, v + ''), value);
+        .reduceHandler(sanitize, (v, f) => Sanitizers.invoke(f, `${v}`), value);
 
       // Validate
       const allValid = Handler
@@ -135,56 +144,16 @@ export class ParamParser {
         : _.last(path.split('.'));
 
       // Set into result
-      const mergeObj = _.set({}, key, sanitizedValue);
-      const merged =_.mergeWith(acc, mergeObj, (objValue, srcValue) => {
+      const mergeObj = safeInsertValueToPath(sanitizedValue, key);
+      const merged = _.mergeWith(acc, mergeObj, (objValue, srcValue) => {
         if (_.isArray(objValue)) {
           return objValue
             .concat(srcValue)
             .filter(x => x != null);
         }
+        return undefined;
       });
       return merged;
     }, {});
-  }
-
-  /**
-   * [*] indicates generic array access
-   * If path contains [*] then we need to expand that to the indexes in data
-   * ---
-   * @param data
-   * @param currentItem
-   * @param allItems
-   */
-  private expandWildcards(data: any, allItems: TParamParserOptions[], currentItem: TParamParserOptions) {
-    // Base case
-    if (!currentItem.path.includes('[*]')) {
-      return allItems;
-    }
-
-    // Expand the paths
-    const [p, ...rest] = currentItem.path.split('[*]');
-
-    // Add an extractor for each sub-item
-    const items = _.get(data, p, []);
-    items.forEach((_, idx) => {
-      const expandedPath = `${p}[${idx}]${rest.join('[*]')}`;
-
-      const child = {
-        ...currentItem,
-        path: expandedPath
-      };
-
-      // Add expanded item to normalizedParams
-      // overwriting the path that is now expanded
-      allItems.push(child);
-
-      // Recurse (Expand all possible children)
-      this.expandWildcards(data, allItems, child);
-    });
-
-    // Remove the currentItem because it has been expanded and return
-    // tslint:disable-next-line:triple-equals
-    _.remove(allItems, item => item.path == currentItem.path);
-    return allItems;
   }
 }

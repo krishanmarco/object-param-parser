@@ -24,6 +24,14 @@ export const Validators: IParserMiddlewares = Object.assign(Validator, {
         return _.isEqual(expectedValue, val);
       }
     },
+
+    len({min, max}): (val) => any {
+      return (val) => {
+        const minSat = min == null || (val != null && val.length >= min);
+        const maxSat = max == null || (val != null && val.length <= max);
+        return minSat && maxSat;
+      };
+    }
   },
 
   invoke(parserMiddleware: TParserMiddleware, ...params: any[]): boolean {

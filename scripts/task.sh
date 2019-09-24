@@ -38,8 +38,16 @@ build() {
     exeIfDir "./src"  "$TOOLS/flow-copy-source -v ./src ./dist"
 }
 
+buildTypescript() {
+    exeIfDir "./src"  "$TOOLS/tsc"
+}
+
 prepublish() {
     build
+}
+
+prepublishTypescript() {
+    buildTypescript
 }
 
 test() {
@@ -63,7 +71,9 @@ default() {
 case ${CMD} in
   clean)          clean;;
   build)          build;;
+  buildTypescript)          buildTypescript;;
   prepublish)     prepublish;;
+  prepublishTypescript)     prepublishTypescript;;
   test)           test;;
   lint)           lint;;
   *)              default;;
