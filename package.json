@@ -2,7 +2,7 @@
   "name": "object-param-parser",
   "author": "krishanmarco <krishanmarcomadan@gmail.com>",
   "main": "dist/index.js",
-  "version": "2.0.1",
+  "version": "3s.0.0",
   "description": "A URL state manager",
   "repository": {
     "type": "git",
