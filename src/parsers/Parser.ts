@@ -10,7 +10,7 @@ export class Parser {
       .parse(object);
   }
 
-  static parser(): ParamParser {
+  static create(): ParamParser {
     return new ParamParser();
   }
 

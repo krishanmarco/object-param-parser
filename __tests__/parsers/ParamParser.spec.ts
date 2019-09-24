@@ -142,7 +142,7 @@ describe('parsers/ParamParser', () => {
 describe('ParamParser (Form version)', () => {
 
   it('Should parse a JSON form def correctly (arrays)', () => {
-    const result = Parser.parser()
+    const result = Parser.create()
       .addAll(JSON.stringify({
         'users[*]': {},
         'users': {
@@ -189,7 +189,7 @@ describe('ParamParser (Form version)', () => {
   });
 
   it('Should parse a JSON form def correctly (nested arrays)', () => {
-    const result = Parser.parser()
+    const result = Parser.create()
       .addAll(JSON.stringify({
         'oldUsers[*].emails[*]': {
           sanitize: 'email',
@@ -213,7 +213,7 @@ describe('ParamParser (Form version)', () => {
   });
 
   it('Should parse a JSON form def correctly (nested objects in arrays)', () => {
-    const result = Parser.parser()
+    const result = Parser.create()
       .addAll(JSON.stringify({
         'info[*]': {},
         'info[0]': {
