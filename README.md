@@ -1,3 +1,6 @@
+<a href="https://www.npmjs.com/package/object-param-parser" alt="Published on NPM">
+        <img src="https://img.shields.io/npm/v/object-param-parser" /></a>
+
 # object-param-parser    
 This library assists complex form handling in an easy and flexible way.    
 It has two main components:    
