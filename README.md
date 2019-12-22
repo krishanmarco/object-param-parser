@@ -1,3 +1,5 @@
+![npm badge](https://img.shields.io/npm/v/object-param-parser)
+
 # object-param-parser    
 This library assists complex form handling in an easy and flexible way.    
 It has two main components:    
